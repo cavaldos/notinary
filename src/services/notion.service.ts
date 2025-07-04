@@ -15,6 +15,19 @@ const NotionService = {
                 error: error.message || 'Không thể lấy thông tin database'
             };
         }
+    }, 
+    async getEntireWord() {
+        try {
+            const response = await axiosinstance.get(`/api/cache`);
+            return response
+        }
+        catch (error: any) {
+            console.error('Lỗi khi lấy thông tin database:1', error);
+            return {
+                success: false,
+                error: error.message || 'Không thể lấy thông tin database'
+            };
+        }
     },
 }
 export default NotionService;
