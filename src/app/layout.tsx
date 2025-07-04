@@ -17,6 +17,7 @@ export default function RootLayout({
 
       <body
         className="antialiased"
+        suppressHydrationWarning={true}
       >
         <ProviderGlobal>
           <div className="flex flex-col h-screen bg-notion-background">

@@ -1,36 +1,292 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Notinary - Next.js Notion Integration
 
-## Getting Started
+Một ứng dụng Next.js tích hợp với Notion API để quản lý database và pages.
 
-First, run the development server:
+## Tính năng
+
+- 🔗 Tích hợp với Notion API
+- 📊 Lấy thông tin database và columns
+- 🔍 Query và filter data từ Notion database
+- ✨ Tạo, cập nhật và xóa pages
+- 🎯 Type-safe với TypeScript
+- 🚀 Server-side API routes
+- 📱 Client-side helper functions
+
+## Cài đặt
+
+### 1. Clone và cài đặt dependencies
+
+```bash
+git clone <your-repo>
+cd notinary
+npm install
+```
+
+### 2. Cấu hình environment variables
+
+Sao chép file `.env.example` thành `.env.local`:
+
+```bash
+cp .env.example .env.local
+```
+
+Cập nhật các giá trị trong `.env.local`:
+
+```env
+# Notion Integration Token
+# Lấy từ: https://www.notion.so/my-integrations
+NOTION_TOKEN=your_notion_token_here
+
+# Database ID
+# Lấy từ URL của database: https://notion.so/your-database-id?v=...
+# Chỉ lấy phần ID trước dấu "?"
+NOTION_DATABASE_ID=your_database_id_here
+
+# API URL cho client-side
+NEXT_PUBLIC_API_URL=http://localhost:3000
+```
+
+### 3. Cấu hình Notion Integration
+
+1. Truy cập [Notion Integrations](https://www.notion.so/my-integrations)
+2. Tạo một integration mới
+3. Sao chép token và dán vào `NOTION_TOKEN`
+4. Chia sẻ database của bạn với integration này
+
+### 4. Chạy ứng dụng
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Mở [http://localhost:3000](http://localhost:3000) để xem kết quả.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## API Endpoints
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### GET /api/notion/database
+Lấy thông tin cơ bản của database
+
+**Query Parameters:**
+- `id` (optional): Database ID
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "database_id",
+    "title": [...]
+    // ... other database info
+  }
+}
+```
+
+### GET /api/notion/columns
+Lấy danh sách columns và properties của database
+
+**Query Parameters:**
+- `id` (optional): Database ID
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "database_name": "My Database",
+    "total_columns": 5,
+    "columns": [
+      {
+        "name": "Name",
+        "type": "title",
+        "id": "column_id"
+      }
+      // ... other columns
+    ]
+  }
+}
+```
+
+### GET/POST /api/notion/query
+Query data từ database
+
+**GET Request:**
+Query tất cả pages trong database
+
+**POST Request:**
+Query với filter và sort
+
+**Body:**
+```json
+{
+  "databaseId": "optional_database_id",
+  "filter": {
+    // Notion filter object
+  },
+  "sorts": [
+    {
+      "property": "Name",
+      "direction": "ascending"
+    }
+  ]
+}
+```
+
+### POST /api/notion/pages
+Tạo page mới trong database
+
+**Body:**
+```json
+{
+  "databaseId": "optional_database_id",
+  "properties": {
+    "Name": {
+      "title": [
+        {
+          "text": {
+            "content": "New Page Title"
+          }
+        }
+      ]
+    }
+    // ... other properties
+  }
+}
+```
+
+### PUT /api/notion/pages
+Cập nhật page
+
+**Body:**
+```json
+{
+  "pageId": "page_id_to_update",
+  "properties": {
+    // Updated properties
+  }
+}
+```
+
+### DELETE /api/notion/pages
+Xóa (archive) page
+
+**Body:**
+```json
+{
+  "pageId": "page_id_to_delete"
+}
+```
+
+## Sử dụng Client-side API
+
+### Import helper functions
+
+```typescript
+import NotionApi from '@/lib/notion-api';
+```
+
+### Lấy thông tin database
+
+```typescript
+const result = await NotionApi.getDatabaseColumns();
+if (result.success) {
+  console.log(result.data);
+}
+```
+
+### Query database
+
+```typescript
+// Query tất cả
+const result = await NotionApi.queryDatabase();
+
+// Query với filter
+const result = await NotionApi.queryDatabase({
+  filter: {
+    property: "Status",
+    select: {
+      equals: "Done"
+    }
+  }
+});
+```
+
+### Tạo page mới
+
+```typescript
+const result = await NotionApi.createPage(databaseId, {
+  "Name": {
+    "title": [
+      {
+        "text": {
+          "content": "New Page"
+        }
+      }
+    ]
+  }
+});
+```
+
+## Cấu trúc thư mục
+
+```
+src/
+├── app/
+│   ├── api/notion/          # API routes
+│   │   ├── database/        # Database info endpoint
+│   │   ├── columns/         # Database columns endpoint
+│   │   ├── query/           # Query database endpoint
+│   │   └── pages/           # CRUD pages endpoint
+│   └── ...
+├── components/
+│   ├── notion-example.tsx   # Example component
+│   └── ...
+├── lib/
+│   └── notion-api.ts        # Client-side API helpers
+├── services/
+│   └── notion.service.ts    # Server-side Notion service
+└── types/
+    └── notion.ts            # TypeScript types
+```
+
+## Types
+
+Dự án sử dụng TypeScript với các types được định nghĩa trong `src/types/notion.ts`:
+
+- `DatabaseInfo`: Thông tin database
+- `ColumnInfo`: Thông tin column
+- `NotionResponse<T>`: Response wrapper
+- `NotionPage`: Notion page object
+- `NotionProperties`: Properties object
+
+## Development
+
+### Chạy development server
+
+```bash
+npm run dev
+```
+
+### Build cho production
+
+```bash
+npm run build
+npm start
+```
+
+### Linting
+
+```bash
+npm run lint
+```
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Notion API Documentation](https://developers.notion.com/)
+- [TypeScript Documentation](https://www.typescriptlang.org/docs/)
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Dự án có thể deploy dễ dàng trên [Vercel Platform](https://vercel.com/new).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Nhớ cấu hình environment variables trên Vercel dashboard.
