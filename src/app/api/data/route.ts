@@ -12,13 +12,15 @@ export async function GET() {
             );
         }
 
-        const result = await NotionDatabase.getDatabaseColumns(databaseId);
+        const result = await NotionDatabase.getInProgressItems(databaseId);
 
         // Chỉ lấy tên các property, không lấy chi tiết bên trong
         // const propertyNames = Object.keys(result.data.properties);
 
         return NextResponse.json({
             success: true,
+            // lay do dai
+            property: result.data?.length,
             data: result, // Trả về array các tên property
             message: 'Lấy thông tin database thành công'
         });

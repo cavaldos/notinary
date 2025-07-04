@@ -19,7 +19,8 @@ export async function GET() {
 
         return NextResponse.json({
             success: true,
-            data: propertyNames, // Trả về array các tên property
+            property: propertyNames, 
+            entire: result, 
             message: 'Lấy thông tin database thành công'
         });
     } catch (error: any) {
