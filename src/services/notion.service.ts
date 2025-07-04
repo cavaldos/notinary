@@ -9,7 +9,7 @@ const NotionService = {
             return response
         }
         catch (error: any) {
-            console.error('Lỗi khi lấy thông tin database:', error);
+            console.error('Lỗi khi lấy thông tin database:1', error);
             return {
                 success: false,
                 error: error.message || 'Không thể lấy thông tin database'

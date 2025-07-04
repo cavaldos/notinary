@@ -85,7 +85,7 @@ export const getDatabaseInfo = async (databaseId: string): Promise<NotionRespons
             data: response
         };
     } catch (error: any) {
-        console.error('Lỗi khi lấy thông tin database:', error);
+        console.error('Lỗi khi lấy thông tin database:2', error);
         return {
             success: false,
             error: error.message || 'Không thể lấy thông tin database'
