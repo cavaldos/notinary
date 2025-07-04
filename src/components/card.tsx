@@ -16,6 +16,31 @@ const Card: React.FC<CardProps> = ({ word, level, type, meaning, pronunciation }
     // const [showMeaning, setshowMeaning] = useState(true);
 
     const showMeaning = true; // Temporarily set to true for testing
+
+    // Hàm phát âm thanh
+    const speakWord = () => {
+        if ('speechSynthesis' in window) {
+            // Dừng phát âm hiện tại nếu có
+            window.speechSynthesis.cancel();
+
+            // Tạo utterance mới
+            const utterance = new SpeechSynthesisUtterance(word);
+
+            // Cấu hình giọng nói
+            utterance.lang = 'en-US'; // Đặt ngôn ngữ tiếng Anh
+            utterance.rate = 0.8; // Tốc độ nói (0.1 - 10)
+            utterance.pitch = 1; // Cao độ giọng (0 - 2)
+            utterance.volume = 1; // Âm lượng (0 - 1)
+
+            // Phát âm
+            window.speechSynthesis.speak(utterance);
+        } else {
+            // Fallback cho các trình duyệt không hỗ trợ
+            console.warn('Trình duyệt không hỗ trợ Text-to-Speech');
+            alert('Trình duyệt của bạn không hỗ trợ phát âm thanh');
+        }
+    };
+
     // const handleTouchStart = () => {
     //     setshowMeaning(true);
     // };
@@ -49,12 +74,16 @@ const Card: React.FC<CardProps> = ({ word, level, type, meaning, pronunciation }
             </h1>
 
             {/* Pronunciation */}
-            <div className="custom_sd inline-flex items-center bg-beige rounded-full px-4 py-1 shadow-sm mb-8 select-none">
+            <div
+                onClick={speakWord}
+                className="custom_sd inline-flex items-center bg-beige rounded-full px-4 py-1 shadow-sm mb-8 select-none hover:cursor-pointer">
+
                 <span className="text-gray-600 mr-2">
                     {pronunciation}
                 </span>
                 <button
-                    className="text-gray-600 hover:text-gray-800 transition-colors"
+                    className="text-gray-600 hover:text-gray-800 transition-colors p-1 rounded-full hover:bg-gray-100 active:bg-gray-200"
+                    title="Phát âm từ này"
                 >
                     <Volume2 className="w-5 h-5" />
                 </button>
