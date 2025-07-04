@@ -1,9 +1,8 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 
-import NotionService from '../services/notion.service';
 
 
 const Home: React.FC = () => {
@@ -18,18 +17,7 @@ const Home: React.FC = () => {
   ];
 
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const result = await NotionService.getDatabaseInfo();
-        console.log('Database Info:', result);
-      } catch (error) {
-        console.error('Error fetching database info:', error);
-      }
-    };
-
-    fetchData();
-  }, []);
+  
   return (
     <div className="h-[80%] flex flex-col items-center justify-center   p-6">
       <div className="grid grid-cols-2 gap-4 w-full max-w-md">

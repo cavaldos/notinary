@@ -5,29 +5,32 @@ import React, { useState } from 'react';
 import { Volume2, Eye } from 'lucide-react';
 
 interface CardProps {
-    word: string;
-    definition: string;
-    example: string;
+    word: string ;
+    level: string;
+    type : string;
+    meaning: string;
     pronunciation: string;
 }
 
-const Card: React.FC<CardProps> = ({ word, definition, example, pronunciation }) => {
-    const [showExample, setShowExample] = useState(false);
+const Card: React.FC<CardProps> = ({ word,level,type, meaning, pronunciation }) => {
+
+
+    const [showMeaning, setshowMeaning] = useState(false);
 
     const handleTouchStart = () => {
-        setShowExample(true);
+        setshowMeaning(true);
     };
 
     const handleTouchEnd = () => {
-        setShowExample(false);
+        setshowMeaning(false);
     };
 
     const handleMouseDown = () => {
-        setShowExample(true);
+        setshowMeaning(true);
     };
 
     const handleMouseUp = () => {
-        setShowExample(false);
+        setshowMeaning(false);
     };
 
     return (
@@ -48,16 +51,15 @@ const Card: React.FC<CardProps> = ({ word, definition, example, pronunciation })
                 </button>
             </div>
 
-            {/* Definition */}
             <div className="space-y-4">
                 <p className="text-xl text-gray-700">
-                    <span className="font-semibold">{"partOfSpeech"}</span> {definition}
+                    <span className="font-semibold"></span> {type}, {level}
                 </p>
 
                 {/* Example với tính năng ẩn/hiện */}
                 <div className="max-w-md mx-auto">
                     <div className="flex items-center justify-center mb-2">
-                        <span className="font-semibold text-gray-600 mr-2">Example:</span>
+                        <span className="font-semibold text-gray-600 mr-2">Mean:</span>
                         <button
                             onTouchStart={handleTouchStart}
                             onTouchEnd={handleTouchEnd}
@@ -71,13 +73,13 @@ const Card: React.FC<CardProps> = ({ word, definition, example, pronunciation })
                         </button>
                     </div>
 
-                    {showExample ? (
+                    {showMeaning ? (
                         <p className="text-gray-600 text-lg leading-relaxed select-none">
-                            {example}
+                            {meaning}
                         </p>
                     ) : (
                         <p className="text-gray-400 text-lg leading-relaxed blur-sm select-none">
-                            {example}
+                                {meaning}
                         </p>
                     )}
                 </div>

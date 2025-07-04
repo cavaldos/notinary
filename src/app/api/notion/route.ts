@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import NotionDatabase from '@/lib/notion-api';
 
 export async function GET() {
@@ -12,17 +12,17 @@ export async function GET() {
             );
         }
 
-        const result = await NotionDatabase.getDatabaseInfo(databaseId);
+        const result = await NotionDatabase.getInProgressItems(databaseId);
 
-        // Chỉ lấy tên các property, không lấy chi tiết bên trong
-        const propertyNames = Object.keys(result.data.properties);
 
-        return NextResponse.json({
-            success: true,
-            property: propertyNames, 
-            entire: result, 
-            message: 'Lấy thông tin database thành công'
-        });
+        return NextResponse.json(
+            {
+                success: result.success,
+                length: result.data?.length,
+                data: result.data,
+            },
+
+        );
     } catch (error: any) {
         return NextResponse.json(
             { success: false, message: error.message },

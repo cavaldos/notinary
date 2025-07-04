@@ -1,38 +1,33 @@
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Card from '../../components/card';
+import NotionService from '@/services/notion.service';
 
 const VocabularyApp: React.FC = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const containerRef = useRef<HTMLDivElement>(null);
     const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-    const dictionary = [
-        {
-            word: "example",
-            pronunciation: "/ɪɡˈzæmpəl/",
-            definition: "a representative form or pattern",
-            example: "This painting is a perfect example of his style.",
-        },
-        {
-            word: "vocabulary",
-            pronunciation: "/vəˈkæbjʊˌlɛri/",
-            definition: "the body of words used in a particular language",
-            example: "She has an extensive vocabulary.",
-        },
-        {
-            word: "vocabulary222",
-            pronunciation: "/vəˈkæbjʊˌlɛri/",
-            definition: "the body of words used in a particular language",
-            example: "She has an extensive vocabulary.",
-        },
-        {
-            word: "vocabulary33333",
-            pronunciation: "/vəˈkæbjʊˌlɛri/",
-            definition: "the body of words used in a particular language",
-            example: "She has an extensive vocabulary.",
-        }
-    ];
+    const [dictionary, setDictionary] = useState([] as any[]);
+
+    useEffect(() => {
+        // Fetch data from Notion API
+        const fetchData = async () => {
+            try {
+                const response: any = await NotionService.getWordInprogress();
+                // filter nhuwngx từ có word banng null
+                const filteredData = response.data.filter((item: any) => item.Word !== null && item.Word.trim() !== '');
+
+                setDictionary(filteredData || []);
+            } catch (error) {
+                console.error('Error fetching vocabulary:', error);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+
 
     // Scroll to specific card with smooth animation
     const scrollToCard = useCallback((index: number) => {
@@ -109,10 +104,11 @@ const VocabularyApp: React.FC = () => {
                         style={{ scrollSnapAlign: 'center' }}
                     >
                         <Card
-                            word={item.word}
-                            pronunciation={item.pronunciation}
-                            definition={item.definition}
-                            example={item.example}
+                            word={item.Word}
+                            level={item.Level}
+                            type={item.Type}
+                            pronunciation={item.Pronunce}
+                            meaning={item.Meaning}
                         />
                     </div>
                 ))}

@@ -27,6 +27,30 @@ interface NotionResponse<T = any> {
     error?: string;
 }
 
+// Hàm để trích xuất giá trị từ các loại thuộc tính (property) của Notion
+const extractPropertyValue = (property: any): any => {
+    switch (property.type) {
+        case 'title':
+            return property.title?.[0]?.plain_text || '';
+        case 'rich_text':
+            return property.rich_text?.[0]?.plain_text || '';
+        case 'select':
+            return property.select?.name || '';
+        case 'multi_select':
+            return property.multi_select.map((option: any) => option.name) || [];
+        case 'number':
+            return property.number;
+        case 'date':
+            return property.date?.start || null;
+        case 'checkbox':
+            return property.checkbox;
+        case 'status':
+            return property.status?.name || '';
+        default:
+            return property[property.type] || null;
+    }
+};
+
 // Kiểm tra token và khởi tạo Notion client
 const getNotionClient = (): Client => {
     if (!process.env.NOTION_TOKEN) {
@@ -179,36 +203,8 @@ export const getFilteredDatabaseItems = async (databaseId: string): Promise<Noti
             Object.keys(page.properties).forEach(propertyName => {
                 if (requiredColumns.includes(propertyName)) {
                     const property = page.properties[propertyName];
-
                     // Xử lý dữ liệu tùy theo loại thuộc tính
-                    switch (property.type) {
-                        case 'title':
-                            item[propertyName] = property.title?.[0]?.plain_text || '';
-                            break;
-                        case 'rich_text':
-                            item[propertyName] = property.rich_text?.[0]?.plain_text || '';
-                            break;
-                        case 'select':
-                            item[propertyName] = property.select?.name || '';
-                            break;
-                        case 'multi_select':
-                            item[propertyName] = property.multi_select.map((option: any) => option.name) || [];
-                            break;
-                        case 'number':
-                            item[propertyName] = property.number;
-                            break;
-                        case 'date':
-                            item[propertyName] = property.date?.start || null;
-                            break;
-                        case 'checkbox':
-                            item[propertyName] = property.checkbox;
-                            break;
-                        case 'status':
-                            item[propertyName] = property.status?.name || '';
-                            break;
-                        default:
-                            item[propertyName] = property[property.type] || null;
-                    }
+                    item[propertyName] = extractPropertyValue(property);
                 }
             });
 
@@ -242,7 +238,7 @@ export const getInProgressItems = async (databaseId: string): Promise<NotionResp
             const response = await client.databases.query({
                 database_id: databaseId,
                 start_cursor: nextCursor,
-                page_size: 200, // Lấy tối đa 100 dòng mỗi lần truy vấn
+                page_size: 200,
                 filter: {
                     property: "Status",
                     status: {
@@ -272,36 +268,8 @@ export const getInProgressItems = async (databaseId: string): Promise<NotionResp
             Object.keys(page.properties).forEach(propertyName => {
                 if (requiredColumns.includes(propertyName)) {
                     const property = page.properties[propertyName];
-
                     // Xử lý dữ liệu tùy theo loại thuộc tính
-                    switch (property.type) {
-                        case 'title':
-                            item[propertyName] = property.title?.[0]?.plain_text || '';
-                            break;
-                        case 'rich_text':
-                            item[propertyName] = property.rich_text?.[0]?.plain_text || '';
-                            break;
-                        case 'select':
-                            item[propertyName] = property.select?.name || '';
-                            break;
-                        case 'multi_select':
-                            item[propertyName] = property.multi_select.map((option: any) => option.name) || [];
-                            break;
-                        case 'number':
-                            item[propertyName] = property.number;
-                            break;
-                        case 'date':
-                            item[propertyName] = property.date?.start || null;
-                            break;
-                        case 'checkbox':
-                            item[propertyName] = property.checkbox;
-                            break;
-                        case 'status':
-                            item[propertyName] = property.status?.name || '';
-                            break;
-                        default:
-                            item[propertyName] = property[property.type] || null;
-                    }
+                    item[propertyName] = extractPropertyValue(property);
                 }
             });
 
