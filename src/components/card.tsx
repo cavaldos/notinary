@@ -13,7 +13,7 @@ interface CardProps {
 
 const Card: React.FC<CardProps> = ({ word, level, type, meaning, pronunciation }) => {
 
-    const [showMeaning, setshowMeaning] = useState(false);
+    const [showMeaning, setshowMeaning] = useState(true);
 
     const handleTouchStart = () => {
         setshowMeaning(true);
@@ -33,7 +33,7 @@ const Card: React.FC<CardProps> = ({ word, level, type, meaning, pronunciation }
 
     return (
         <div className="text-center mb-8 py-4 rounded-lg min-w-[400px] flex flex-col items-center justify-center">
-            <button
+            {/* <button
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
                 onMouseDown={handleMouseDown}
@@ -42,7 +42,7 @@ const Card: React.FC<CardProps> = ({ word, level, type, meaning, pronunciation }
                 className="text-gray-500 hover:text-gray-700 ml-auto mr-4  active:text-gray-800 transition-colors select-none p-2 rounded-full"
             >
                 <Eye className=" w-20 h-20 p-3" />
-            </button>
+            </button> */}
             <h1 className="text-5xl font-bold text-gray-900 mb-6 select-none">
                 {word}
             </h1>

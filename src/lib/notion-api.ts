@@ -240,10 +240,20 @@ export const getInProgressItems = async (databaseId: string): Promise<NotionResp
                 start_cursor: nextCursor,
                 page_size: 200,
                 filter: {
-                    property: "Status",
-                    status: {
-                        equals: "In progress"
-                    }
+                    or: [
+                        {
+                            property: "Status",
+                            status: {
+                                equals: "In progress"
+                            }
+                        },
+                        {
+                            property: "Status",
+                            status: {
+                                equals: "Not started"
+                            }
+                        }
+                    ]
                 }
             });
 
@@ -289,12 +299,43 @@ export const getInProgressItems = async (databaseId: string): Promise<NotionResp
     }
 };
 
+// Hàm để cập nhật trạng thái của một mục thành "Done"
+export const updateStatusToDone = async (pageId: string): Promise<NotionResponse<any>> => {
+    try {
+        const client = getClient();
+
+        // Gọi API để cập nhật trạng thái của trang
+        const response = await client.pages.update({
+            page_id: pageId,
+            properties: {
+                "Status": {
+                    status: {
+                        name: "Done"
+                    }
+                }
+            }
+        });
+
+        return {
+            success: true,
+            data: response
+        };
+    } catch (error: any) {
+        console.error('❌ Lỗi khi cập nhật trạng thái thành "Done":', error.body || error.message);
+        return {
+            success: false,
+            error: error.message || 'Không thể cập nhật trạng thái'
+        };
+    }
+};
+
 // Exporting the functions as a default object for backwards compatibility
 const notionAPI = {
     getDatabaseInfo,
     getDatabaseColumns,
     getFilteredDatabaseItems,
-    getInProgressItems
+    getInProgressItems,
+    updateStatusToDone
 };
 
 export default notionAPI;
