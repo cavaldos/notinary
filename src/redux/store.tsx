@@ -10,6 +10,7 @@ import {
     PERSIST,
     PURGE,
     REGISTER,
+    Persistor
 } from 'redux-persist';
 
 // Use dynamic import for storage to prevent server-side errors
@@ -28,9 +29,11 @@ const rootReducer = combineReducers({
     count: countSlice
 });
 
+export type RootState = ReturnType<typeof rootReducer>;
+
 // Create a store with or without persistence based on environment
-let store;
-let persistor;
+let store: ReturnType<typeof configureStore> | undefined | any;
+let persistor: Persistor | undefined | any;
 
 if (typeof window !== 'undefined') {
     // We're in the browser, use persist
@@ -54,5 +57,6 @@ if (typeof window !== 'undefined') {
     });
 }
 
+export type AppDispatch = typeof store.dispatch;
 export { persistor };
 export default store;

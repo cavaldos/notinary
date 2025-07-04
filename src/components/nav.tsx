@@ -2,7 +2,7 @@
 'use client'
 
 import React from 'react';
-import { Grid3X3, Gamepad2, User, Settings } from 'lucide-react';
+import { Grid3X3, Gamepad2, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation'
 const Navbar: React.FC = () => {
     const navigate = useRouter().push;
