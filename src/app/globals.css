@@ -1,13 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Comic+Relief:wght@400;700&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=Comic+Relief:wght@400;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  font-family: "Comic Relief", "JetBrains Mono", "Space Mono", system-ui , Helvetica, Arial, sans-serif;
+  font-family: "Comic Relief", "JetBrains Mono", "Space Mono", system-ui, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   font-style: normal;
+  
+  --font-primary: "Comic Relief", sans-serif;
   
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
@@ -26,8 +27,8 @@
   background-color: #E1DBC7;
   color: var(--color-black);
 }
-@theme {
-  --font-display:  "Comic Relief", "JetBrains Mono", "Space Mono", system-ui , Helvetica, Arial, sans-serif;
+@theme inline {
+  --font-display: "Comic Relief", "JetBrains Mono", "Space Mono", system-ui, Helvetica, Arial, sans-serif;
   --breakpoint-3xl: 1920px;
   --color-grey-light:#A6A6A4;
   --color-beige: #EBE9DF;  /*#efede7;*/
@@ -40,42 +41,10 @@
   --ease-snappy: cubic-bezier(0.2, 0, 0, 1);
 }
 
-
-.comic-relief-regular {
-  font-family: "Comic Relief", system-ui;
-  font-weight: 400;
-  font-style: normal;
+.custom_sd{
+  box-shadow: 0 0 15px 7px rgba(55, 55, 55, 0.15);
 }
 
-.comic-relief-bold {
-  font-family: "Comic Relief", system-ui;
-  font-weight: 700;
-  font-style: normal;
+.custom_sd2{
+  box-shadow: 0 0 15px 6px rgba(55, 55, 55, 0.20);
 }
-
-.space-mono-regular {
-  font-family: "Space Mono", monospace;
-  font-weight: 400;
-  font-style: normal;
-}
-
-.space-mono-bold {
-  font-family: "Space Mono", monospace;
-  font-weight: 700;
-  font-style: normal;
-}
-
-.space-mono-regular-italic {
-  font-family: "Space Mono", monospace;
-  font-weight: 400;
-  font-style: italic;
-}
-
-.space-mono-bold-italic {
-  font-family: "Space Mono", monospace;
-  font-weight: 700;
-  font-style: italic;
-}
-
-
-
