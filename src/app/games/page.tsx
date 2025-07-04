@@ -107,7 +107,7 @@ const VocabularyApp: React.FC = () => {
                             word={item.Word}
                             level={item.Level}
                             type={item.Type}
-                            pronunciation={item.Pronunce}
+                            pronunciation={item.Pronounce}
                             meaning={item.Meaning}
                         />
                     </div>

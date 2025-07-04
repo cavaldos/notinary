@@ -29,5 +29,18 @@ const NotionService = {
             };
         }
     },
+    async getWordById(id: string) {
+        try {
+            const response = await axiosinstance.get(`/api/notion/${id}`);
+            return response
+        }
+        catch (error: any) {
+            console.error('Lỗi khi lấy thông tin từ Notion:', error);
+            return {
+                success: false,
+                error: error.message || 'Không thể lấy thông tin từ Notion'
+            };
+        }
+    },
 }
 export default NotionService;
