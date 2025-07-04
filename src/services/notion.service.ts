@@ -15,7 +15,7 @@ const NotionService = {
                 error: error.message || 'Không thể lấy thông tin database'
             };
         }
-    }, 
+    },
     async getEntireWord() {
         try {
             const response = await axiosinstance.get(`/api/cache`);
@@ -29,9 +29,13 @@ const NotionService = {
             };
         }
     },
-    async getWordById(id: string) {
+    async upDateToDone(id: string) {
         try {
-            const response = await axiosinstance.get(`/api/notion/${id}`);
+            const response = await axiosinstance.post(`/api/notion`,
+                {
+                    pageId: id
+                }
+            );
             return response
         }
         catch (error: any) {

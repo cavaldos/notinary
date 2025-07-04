@@ -104,6 +104,7 @@ const VocabularyApp: React.FC = () => {
                         style={{ scrollSnapAlign: 'center' }}
                     >
                         <Card
+                            idPage={item.id}
                             word={item.Word}
                             level={item.Level}
                             type={item.Type}

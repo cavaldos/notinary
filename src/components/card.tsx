@@ -1,21 +1,20 @@
 'use client';
 
 import React from 'react';
-import { Volume2 } from 'lucide-react';
-
+import { Volume2, SquareChevronUp } from 'lucide-react';
+import NotionService from '@/services/notion.service';
 interface CardProps {
     word: string;
     level: string;
     type: string;
     meaning: string;
     pronunciation: string;
+    idPage: string; // Thêm idPage để xác định trang trong Notion
 }
 
-const Card: React.FC<CardProps> = ({ word, level, type, meaning, pronunciation }) => {
+const Card: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pronunciation }) => {
 
-    // const [showMeaning, setshowMeaning] = useState(true);
-
-    const showMeaning = true; // Temporarily set to true for testing
+    const showMeaning = true;
 
     // Hàm phát âm thanh
     const speakWord = () => {
@@ -40,35 +39,18 @@ const Card: React.FC<CardProps> = ({ word, level, type, meaning, pronunciation }
             alert('Trình duyệt của bạn không hỗ trợ phát âm thanh');
         }
     };
+    const UpdateToDone = async (idPage: any) => {
+        try {
+            await NotionService.upDateToDone(idPage);
 
-    // const handleTouchStart = () => {
-    //     setshowMeaning(true);
-    // };
-
-    // const handleTouchEnd = () => {
-    //     setshowMeaning(false);
-    // };
-
-    // const handleMouseDown = () => {
-    //     setshowMeaning(true);
-    // };
-
-    // const handleMouseUp = () => {
-    //     setshowMeaning(false);
-    // };
+        } catch (error) {
+            console.error('Lỗi khi cập nhật:', error);
+        }
+    };
 
     return (
-        <div className="text-center mb-8 py-4 rounded-lg min-w-[400px] flex flex-col items-center justify-center">
-            {/* <button
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-                onMouseDown={handleMouseDown}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                className="text-gray-500 hover:text-gray-700 ml-auto mr-4  active:text-gray-800 transition-colors select-none p-2 rounded-full"
-            >
-                <Eye className=" w-20 h-20 p-3" />
-            </button> */}
+        <div className="text-center mb-8 py-4 rounded-lg min-w-[400px] flex flex-col items-center justify-center  h-[400px]">
+
             <h1 className="text-5xl font-bold text-gray-900 mb-6 select-none">
                 {word}
             </h1>
@@ -116,7 +98,13 @@ const Card: React.FC<CardProps> = ({ word, level, type, meaning, pronunciation }
                         </p>
                     )}
                 </div>
+
             </div>
+            <button
+                onClick={() => UpdateToDone(idPage)}
+                className='text-black rounded-full w-16 h-16 flex items-center justify-center transition-colors mt-auto hover:bg-gray-100 active:bg-gray-200'>
+                <SquareChevronUp size={40} />
+            </button>
         </div>
     );
 }

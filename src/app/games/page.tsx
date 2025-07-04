@@ -28,7 +28,6 @@ const VocabularyApp: React.FC = () => {
     }, []);
 
 
-
     // Scroll to specific card with smooth animation
     const scrollToCard = useCallback((index: number) => {
         if (cardRefs.current[index]) {
@@ -104,6 +103,7 @@ const VocabularyApp: React.FC = () => {
                         style={{ scrollSnapAlign: 'center' }}
                     >
                         <Card
+                            idPage={item.id}
                             word={item.Word}
                             level={item.Level}
                             type={item.Type}
