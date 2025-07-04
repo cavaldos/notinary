@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Volume2, Eye } from 'lucide-react';
+import React from 'react';
+import { Volume2 } from 'lucide-react';
 
 interface CardProps {
     word: string;
@@ -13,23 +13,24 @@ interface CardProps {
 
 const Card: React.FC<CardProps> = ({ word, level, type, meaning, pronunciation }) => {
 
-    const [showMeaning, setshowMeaning] = useState(true);
+    // const [showMeaning, setshowMeaning] = useState(true);
 
-    const handleTouchStart = () => {
-        setshowMeaning(true);
-    };
+    const showMeaning = true; // Temporarily set to true for testing
+    // const handleTouchStart = () => {
+    //     setshowMeaning(true);
+    // };
 
-    const handleTouchEnd = () => {
-        setshowMeaning(false);
-    };
+    // const handleTouchEnd = () => {
+    //     setshowMeaning(false);
+    // };
 
-    const handleMouseDown = () => {
-        setshowMeaning(true);
-    };
+    // const handleMouseDown = () => {
+    //     setshowMeaning(true);
+    // };
 
-    const handleMouseUp = () => {
-        setshowMeaning(false);
-    };
+    // const handleMouseUp = () => {
+    //     setshowMeaning(false);
+    // };
 
     return (
         <div className="text-center mb-8 py-4 rounded-lg min-w-[400px] flex flex-col items-center justify-center">
