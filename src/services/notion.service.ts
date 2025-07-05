@@ -5,7 +5,7 @@ import axiosinstance from './axios.config';
 const NotionService = {
     async getWordInprogress() {
         try {
-            const response = await axiosinstance.get(`/api/notion`);
+            const response = await axiosinstance.get(`/api/notion`); 
             return response
         }
         catch (error: any) {
