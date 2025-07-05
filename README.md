@@ -40,7 +40,7 @@ NOTION_TOKEN=your_notion_token_here
 # Database ID
 # Lấy từ URL của database: https://notion.so/your-database-id?v=...
 # Chỉ lấy phần ID trước dấu "?"
-NOTION_DATABASE_ID=your_database_id_here
+NOTION_DATABASE_EN_ID=your_database_id_here
 
 # API URL cho client-side
 NEXT_PUBLIC_API_URL=http://localhost:3000

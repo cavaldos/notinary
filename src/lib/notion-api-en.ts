@@ -1,79 +1,8 @@
-import { Client } from '@notionhq/client';
-
-interface ColumnOption {
-    name: string;
-    color: string;
-}
-
-interface ColumnInfo {
-    name: string;
-    type: string;
-    id: string;
-    options?: ColumnOption[];
-    database_id?: string;
-    expression?: string;
-    format?: string;
-}
-
-interface DatabaseInfo {
-    database_name: string;
-    total_columns: number;
-    columns: ColumnInfo[];
-}
-
-interface NotionResponse<T = any> {
-    success: boolean;
-    data?: T;
-    error?: string;
-}
-
-// Hàm để trích xuất giá trị từ các loại thuộc tính (property) của Notion
-const extractPropertyValue = (property: any): any => {
-    switch (property.type) {
-        case 'title':
-            return property.title?.[0]?.plain_text || '';
-        case 'rich_text':
-            return property.rich_text?.[0]?.plain_text || '';
-        case 'select':
-            return property.select?.name || '';
-        case 'multi_select':
-            return property.multi_select.map((option: any) => option.name) || [];
-        case 'number':
-            return property.number;
-        case 'date':
-            return property.date?.start || null;
-        case 'checkbox':
-            return property.checkbox;
-        case 'status':
-            return property.status?.name || '';
-        default:
-            return property[property.type] || null;
-    }
-};
-
-// Kiểm tra token và khởi tạo Notion client
-const getNotionClient = (): Client => {
-    if (!process.env.NOTION_TOKEN) {
-        throw new Error('NOTION_TOKEN không được tìm thấy trong environment variables');
-    }
-
-    return new Client({
-        auth: process.env.NOTION_TOKEN,
-    });
-};
-
-// Cache client instance
-let notionClient: Client | null = null;
-
-const getClient = (): Client => {
-    if (!notionClient) {
-        notionClient = getNotionClient();
-    }
-    return notionClient;
-};
+import { extractPropertyValue } from '@/lib/notion-base';
+import getClient from '@/lib/notion-base';
 
 // Hàm để lấy thông tin database
-export const getDatabaseInfo = async (databaseId: string): Promise<NotionResponse> => {
+export const getDatabaseInfo = async (databaseId: string): Promise<any> => {
     try {
         const client = getClient();
         const response = await client.databases.retrieve({
@@ -94,19 +23,19 @@ export const getDatabaseInfo = async (databaseId: string): Promise<NotionRespons
 };
 
 // Hàm để lấy danh sách các cột (properties) của database
-export const getDatabaseColumns = async (databaseId: string): Promise<NotionResponse<DatabaseInfo>> => {
+export const getDatabaseColumns = async (databaseId: string): Promise<any> => {
     try {
         const client = getClient();
         const response = await client.databases.retrieve({
             database_id: databaseId,
         });
 
-        const columns: ColumnInfo[] = [];
+        const columns: any[] = [];
         const properties = response.properties;
 
         Object.keys(properties).forEach((key) => {
             const prop = properties[key];
-            const columnInfo: ColumnInfo = {
+            const columnInfo: any = {
                 name: key,
                 type: prop.type,
                 id: prop.id
@@ -146,7 +75,7 @@ export const getDatabaseColumns = async (databaseId: string): Promise<NotionResp
             columns.push(columnInfo);
         });
 
-        const databaseInfo: DatabaseInfo = {
+        const databaseInfo: any = {
             database_name: (response as any).title?.map((t: any) => t.text.content).join('') || 'Unknown Database',
             total_columns: columns.length,
             columns: columns
@@ -166,7 +95,7 @@ export const getDatabaseColumns = async (databaseId: string): Promise<NotionResp
 };
 
 // Hàm để lấy dữ liệu từ database với các cột cụ thể
-export const getFilteredDatabaseItems = async (databaseId: string): Promise<NotionResponse<any[]>> => {
+export const getFilteredDatabaseItems = async (databaseId: string): Promise<any> => {
     try {
         const client = getClient();
         let allResults: any[] = [];
@@ -225,48 +154,37 @@ export const getFilteredDatabaseItems = async (databaseId: string): Promise<Noti
 };
 
 // Hàm để lấy dữ liệu từ database với Status là "In progress"
-export const getInProgressItems = async (databaseId: string): Promise<NotionResponse<any[]>> => {
+export const getInProgressItems = async (databaseId: string, pageSize: number = 200): Promise<any> => {
     try {
         const client = getClient();
-        let allResults: any[] = [];
-        let hasMore = true;
-        let nextCursor: string | undefined = undefined;
 
-        // Lấy tất cả dữ liệu bằng cách phân trang với filter
-        while (hasMore) {
-            // Truy vấn các items trong database với phân trang và filter
-            const response = await client.databases.query({
-                database_id: databaseId,
-                start_cursor: nextCursor,
-                page_size: 200,
-                filter: {
-                    or: [
-                        {
-                            property: "Status",
-                            status: {
-                                equals: "In progress"
-                            }
-                        },
-                        {
-                            property: "Status",
-                            status: {
-                                equals: "Not started"
-                            }
+        // Truy vấn các items trong database với page_size cố định
+        const response = await client.databases.query({
+            database_id: databaseId,
+            page_size: pageSize,
+            filter: {
+                or: [
+                    {
+                        property: "Status",
+                        status: {
+                            equals: "In progress"
                         }
-                    ]
-                }
-            });
-
-            allResults = [...allResults, ...response.results];
-            hasMore = response.has_more;
-            nextCursor = response.next_cursor || undefined;
-        }
+                    },
+                    {
+                        property: "Status",
+                        status: {
+                            equals: "Not started"
+                        }
+                    }
+                ]
+            }
+        });
 
         // Danh sách các cột cần lấy
         const requiredColumns = ["Word", "Type", "Status", "Level", "Spaced Time", "Pronounce", "Meaning", "Repeat"];
 
         // Xử lý và lọc dữ liệu
-        const filteredData = allResults.map((page: any) => {
+        const filteredData = response.results.map((page: any) => {
             const item: Record<string, any> = {
                 id: page.id,
                 url: page.url,
@@ -299,8 +217,97 @@ export const getInProgressItems = async (databaseId: string): Promise<NotionResp
     }
 };
 
-// Hàm để cập nhật trạng thái của một mục thành "Done"
-export const updateStatusToDone = async (pageId: string): Promise<NotionResponse<any>> => {
+export const getSpacedTimeItems = async (
+    databaseId: string,
+    pageSize: number = 200,
+    includeEmpty: boolean = true,
+    spacedTimeValue: string,
+    notStatus: string = "Done"
+): Promise<any> => {
+    try {
+        const client = getClient();
+
+        // Tạo filter cho Spaced Time dựa vào tham số includeEmpty
+        const spacedTimeFilters: any[] = [];
+
+        if (includeEmpty) {
+            spacedTimeFilters.push({
+                property: "Spaced Time",
+                select: {
+                    is_empty: true
+                }
+            });
+        }
+
+        spacedTimeFilters.push({
+            property: "Spaced Time",
+            select: {
+                equals: spacedTimeValue
+            }
+        });
+
+        // Truy vấn các items trong database với page_size cố định
+        const response = await client.databases.query({
+            database_id: databaseId,
+            page_size: pageSize,
+            filter: {
+                and: [
+                    {
+                        or: spacedTimeFilters
+                    },
+                    {
+                        property: "Status",
+                        status: {
+                            does_not_equal: notStatus
+                        }
+                    }
+                ]
+            }
+        });
+
+        // Danh sách các cột cần lấy
+        const requiredColumns = ["Word", "Type", "Status", "Level", "Spaced Time", "Pronounce", "Meaning", "Repeat"];
+
+        // Xử lý và lọc dữ liệu
+        const filteredData = response.results.map((page: any) => {
+            const item: Record<string, any> = {
+                id: page.id,
+                url: page.url,
+                created_time: page.created_time,
+                last_edited_time: page.last_edited_time,
+            };
+
+            // Lọc các thuộc tính (properties) cần thiết
+            Object.keys(page.properties).forEach(propertyName => {
+                if (requiredColumns.includes(propertyName)) {
+                    const property = page.properties[propertyName];
+                    // Xử lý dữ liệu tùy theo loại thuộc tính
+                    item[propertyName] = extractPropertyValue(property);
+                }
+            });
+
+            return item;
+        });
+
+        return {
+            success: true,
+            data: filteredData
+        };
+    } catch (error: any) {
+        console.error('❌ Lỗi khi lấy dữ liệu "Spaced Time":', error.body || error.message);
+        return {
+            success: false,
+            error: error.message || 'Không thể lấy dữ liệu "Spaced Time" từ database'
+        };
+    }
+};
+
+
+
+
+
+// Hàm để cập nhật trạng thái của một mục
+export const updateStatus = async (pageId: string, status: string): Promise<any> => {
     try {
         const client = getClient();
 
@@ -310,7 +317,7 @@ export const updateStatusToDone = async (pageId: string): Promise<NotionResponse
             properties: {
                 "Status": {
                     status: {
-                        name: "Done"
+                        name: status
                     }
                 }
             }
@@ -329,13 +336,16 @@ export const updateStatusToDone = async (pageId: string): Promise<NotionResponse
     }
 };
 
+
+
 // Exporting the functions as a default object for backwards compatibility
 const notionAPI = {
     getDatabaseInfo,
     getDatabaseColumns,
     getFilteredDatabaseItems,
     getInProgressItems,
-    updateStatusToDone
+    updateStatus,
+    getSpacedTimeItems
 };
 
 export default notionAPI;

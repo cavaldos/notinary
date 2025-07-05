@@ -46,5 +46,39 @@ const NotionService = {
             };
         }
     },
+
+    en: {
+        async updateSpacedTime(pageId: string, propertyName: string, selectValue: string) {
+            if (propertyName !== "Spaced Time") {
+                return {
+                    success: false,
+                    error: 'Tên thuộc tính không hợp lệ'
+                };
+            }
+            if (selectValue !== "Familiar" && selectValue !== "Competent" && selectValue !== "Expert" && selectValue !== "Mastery") {
+                return {
+                    success: false,
+                    error: 'Giá trị select là bắt buộc'
+                };
+            }
+            try {
+                const response = await axiosinstance.post(`/api/notion/query`,
+                    {
+                        pageId: pageId,
+                        propertyName: propertyName,
+                        selectValue: selectValue
+                    }
+                );
+                return response
+            }
+            catch (error: any) {
+                console.error('Lỗi khi cập nhật thuộc tính:', error);
+                return {
+                    success: false,
+                    error: error.message || 'Không thể cập nhật thuộc tính'
+                };
+            }
+        }
+    }
 }
 export default NotionService;

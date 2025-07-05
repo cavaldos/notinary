@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import NotionDatabase from '@/lib/notion-api';
+import NotionDatabase from '@/lib/notion-api-en';
 import { unstable_cache } from 'next/cache';
 import { revalidateTag } from 'next/cache';
 
@@ -19,7 +19,7 @@ const getNotionDataWithCache = unstable_cache(
 
 export async function GET(request: NextRequest) {
     try {
-        const databaseId = process.env.NOTION_DATABASE_ID;
+        const databaseId = process.env.NOTION_DATABASE_EN_ID;
         const forceRefresh = request.nextUrl.searchParams.get('refresh') === 'true';
 
         if (!databaseId) {
