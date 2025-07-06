@@ -67,7 +67,7 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
     };
 
     return (
-        <div className="text-center mb-8 py-4 rounded-lg min-w-[400px] flex flex-col items-center justify-center  h-[400px]">
+        <div className="text-center mb-8 py-4 rounded-lg min-w-[500px] flex flex-col items-center justify-center  h-[400px]">
 
             <h1 className="text-5xl font-bold text-gray-900 mb-6 select-none">
                 {word}
