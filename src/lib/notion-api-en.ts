@@ -219,7 +219,7 @@ export const getInProgressItems = async (databaseId: string, pageSize: number = 
 
 export const getSpacedTimeItems = async (
     databaseId: string,
-    pageSize: number = 200,
+    pageSize: number = 100,
     includeEmpty: boolean = true,
     spacedTimeValue: string,
     notStatus: string = "Done"
@@ -255,7 +255,7 @@ export const getSpacedTimeItems = async (
             const response = await client.databases.query({
                 database_id: databaseId,
                 start_cursor: nextCursor,
-                page_size: 100, // Lấy tối đa 100 dòng mỗi lần truy vấn
+                page_size: pageSize, // Lấy tối đa 100 dòng mỗi lần truy vấn
                 filter: {
                     and: [
                         {
