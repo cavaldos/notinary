@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 
 import { useDictionary } from '@/hooks/useDictionary';
@@ -35,7 +35,7 @@ const SpaceLayout = ({ children }: { children: React.ReactNode }) => {
     }];
 
     // Hàm để reset timeout
-    const resetTimeout = () => {
+    const resetTimeout = useCallback(() => {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
         }
@@ -45,10 +45,10 @@ const SpaceLayout = ({ children }: { children: React.ReactNode }) => {
                 setIsExpanded(false);
             }, 5000);
         }
-    };
+    }, [isExpanded]);
     useEffect(() => {
         fetchData(space);
-    }, [space]);
+    }, [fetchData, space]);
     // Effect để xử lý click outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -74,7 +74,7 @@ const SpaceLayout = ({ children }: { children: React.ReactNode }) => {
                 clearTimeout(timeoutRef.current);
             }
         };
-    }, [isExpanded]);
+    }, [isExpanded, resetTimeout]);
 
     const handleDynamicClick = (e: React.MouseEvent) => {
         e.stopPropagation();

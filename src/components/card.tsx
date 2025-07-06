@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Volume2, SquareChevronUp } from 'lucide-react';
+import { Volume2 } from 'lucide-react';
 import NotionService from '@/services/notion.service';
 interface CardProps {
     word: string;
@@ -102,8 +102,9 @@ const Card: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pronunc
             </div>
             <button
                 onClick={() => UpdateToDone(idPage)}
-                className='text-black rounded-full w-16 h-16 flex items-center justify-center transition-colors mt-auto hover:bg-gray-100 active:bg-gray-200'>
-                <SquareChevronUp size={40} />
+                className='text-black rounded-md w-16 h-16 flex items-center justify-center bg-beige
+                text-2xl font-bold transition-colors mt-auto hover:bg-gray-100 active:bg-gray-200'>
+                Done
             </button>
         </div>
     );

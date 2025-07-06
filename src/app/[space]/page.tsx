@@ -14,7 +14,7 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
 
     useEffect(() => {
         fetchData(space);
-    }, []);
+    }, [fetchData, space]);
 
     // Scroll to specific card with smooth animation
     const scrollToCard = useCallback((index: number) => {

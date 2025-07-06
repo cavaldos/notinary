@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Volume2, SquareChevronUp, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Volume2, ArrowRight, ArrowLeft } from 'lucide-react';
 import NotionService from '@/services/notion.service';
 import { useParams } from 'next/navigation';
+
 interface CardProps {
     word: string;
     level: string;
@@ -14,10 +15,10 @@ interface CardProps {
 }
 
 const CardSpace: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pronunciation }) => {
-
     const showMeaning = true;
     const params = useParams();
     const { space } = params;
+
     // Hàm phát âm thanh
     const speakWord = () => {
         if ('speechSynthesis' in window) {
@@ -52,6 +53,15 @@ const CardSpace: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pr
             }
         } catch (error) {
             console.error('Lỗi khi cập nhật:', error);
+        }
+    };
+
+    // Handle the case where space might be undefined
+    const handleSpaceUpdate = (status: string) => {
+        if (space && typeof space === 'string') {
+            updateSpacedTime(idPage, space, status);
+        } else {
+            console.warn('Space parameter is undefined or not a string');
         }
     };
 
@@ -111,7 +121,7 @@ const CardSpace: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pr
             {/* Navigation buttons - Cải thiện CSS */}
             <div className="flex items-center justify-center gap-10 mt-auto pt-6">
                 <button
-                    onClick={() => updateSpacedTime(idPage, space, 'down')}
+                    onClick={() => handleSpaceUpdate('down')}
                     className="group flex items-center justify-center w-12 h-12 bg-beige rounded-md transition-all duration-200 hover:cursor-pointer"
                     title="Thẻ trước"
                 >
@@ -119,7 +129,7 @@ const CardSpace: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pr
                 </button>
 
                 <button
-                    onClick={() => updateSpacedTime(idPage, space, 'up')}
+                    onClick={() => handleSpaceUpdate('up')}
                     className="group flex items-center justify-center w-12 h-12 bg-beige rounded-md transition-all duration-200 hover:cursor-pointer"
                     title="Thẻ tiếp theo"
                 >
