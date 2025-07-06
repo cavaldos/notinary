@@ -100,11 +100,12 @@ const CardSpace: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pr
                 </div>
 
             </div>
-            <button
+            <div
                 onClick={() => UpdateToDone(idPage)}
-                className='text-black rounded-full w-16 h-16 flex items-center justify-center transition-colors mt-auto hover:bg-gray-100 active:bg-gray-200'>
+                className='text-black rounded-full w-16 h-16 flex items-center justify-center bg-red-300
+                transition-colors mt-auto hover:bg-gray-100 active:bg-gray-200'>
                 <SquareChevronUp size={40} />
-            </button>
+            </div>
         </div>
     );
 }

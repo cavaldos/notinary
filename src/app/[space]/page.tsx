@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useRef, useEffect, useCallback, use } from 'react';
 
-import Card from '@/components/card';
+import Card from '@/components/cardspace';
 import { useDictionary } from '@/hooks/useDictionary';
 
 const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {

@@ -48,30 +48,52 @@ const NotionService = {
     },
 
     en: {
-        async updateSpacedTime(pageId: string, propertyName: string, selectValue: string) {
+        async updateSpacedTime(pageId: string, propertyName: string, selectValue: string, status: string) {
             if (propertyName !== "Spaced Time") {
                 return {
                     success: false,
                     error: 'Tên thuộc tính không hợp lệ'
                 };
             }
-            if (selectValue !== "Familiar" && selectValue !== "Competent" && selectValue !== "Expert" && selectValue !== "Mastery") {
+
+            const levels = ["Familiar", "Competent", "Expert", "Mastery"];
+
+            if (!levels.includes(selectValue)) {
                 return {
                     success: false,
-                    error: 'Giá trị select là bắt buộc'
+                    error: 'Giá trị select không hợp lệ'
                 };
             }
-            try {
-                const response = await axiosinstance.post(`/api/notion/query`,
-                    {
-                        pageId: pageId,
-                        propertyName: propertyName,
-                        selectValue: selectValue
-                    }
-                );
-                return response
+
+            if (status !== "up" && status !== "down") {
+                return {
+                    success: false,
+                    error: 'Status phải là "up" hoặc "down"'
+                };
             }
-            catch (error: any) {
+
+            // Tìm index của level hiện tại
+            const currentIndex = levels.indexOf(selectValue);
+            let newIndex: number;
+
+            if (status === "up") {
+                // Tăng level (nếu đã ở level cao nhất thì giữ nguyên)
+                newIndex = Math.min(currentIndex + 1, levels.length - 1);
+            } else {
+                // Giảm level (nếu đã ở level thấp nhất thì giữ nguyên)
+                newIndex = Math.max(currentIndex - 1, 0);
+            }
+
+            const newSelectValue = levels[newIndex];
+
+            try {
+                const response = await axiosinstance.post(`/api/notion/query`, {
+                    pageId: pageId,
+                    propertyName: propertyName,
+                    selectValue: newSelectValue // Sử dụng giá trị mới đã tính toán
+                });
+                return response;
+            } catch (error: any) {
                 console.error('Lỗi khi cập nhật thuộc tính:', error);
                 return {
                     success: false,
