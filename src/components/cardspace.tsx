@@ -6,15 +6,16 @@ import NotionService from '@/services/notion.service';
 import { useParams } from 'next/navigation';
 
 interface CardProps {
+    index: number;
+    idPage: string;
     word: string;
     level: string;
     type: string;
     meaning: string;
     pronunciation: string;
-    idPage: string; // Thêm idPage để xác định trang trong Notion
 }
 
-const CardSpace: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pronunciation }) => {
+const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, meaning, pronunciation }) => {
     const showMeaning = true;
     const params = useParams();
     const { space } = params;
@@ -102,7 +103,7 @@ const CardSpace: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pr
                 {/* Example với tính năng ẩn/hiện */}
                 <div className="max-w-md mx-auto">
                     <div className="flex items-center justify-center mb-2">
-                        <span className="font-semibold text-gray-600 mr-2">Mean:</span>
+                        <span className="font-semibold text-gray-600 mr-2">{index}</span>
                     </div>
 
                     {showMeaning ? (

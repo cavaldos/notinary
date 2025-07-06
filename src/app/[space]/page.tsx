@@ -90,6 +90,7 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
                         style={{ scrollSnapAlign: 'center' }}
                     >
                         <Card
+                            index={index}
                             idPage={item.id}
                             word={item.Word}
                             level={item.Level}
