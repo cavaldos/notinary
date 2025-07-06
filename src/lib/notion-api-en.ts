@@ -226,6 +226,9 @@ export const getSpacedTimeItems = async (
 ): Promise<any> => {
     try {
         const client = getClient();
+        let allResults: any[] = [];
+        let hasMore = true;
+        let nextCursor: string | undefined = undefined;
 
         // Tạo filter cho Spaced Time dựa vào tham số includeEmpty
         const spacedTimeFilters: any[] = [];
@@ -246,30 +249,38 @@ export const getSpacedTimeItems = async (
             }
         });
 
-        // Truy vấn các items trong database với page_size cố định
-        const response = await client.databases.query({
-            database_id: databaseId,
-            page_size: pageSize,
-            filter: {
-                and: [
-                    {
-                        or: spacedTimeFilters
-                    },
-                    {
-                        property: "Status",
-                        status: {
-                            does_not_equal: notStatus
+        // Lấy tất cả dữ liệu bằng cách phân trang
+        while (hasMore) {
+            // Truy vấn các items trong database với phân trang
+            const response = await client.databases.query({
+                database_id: databaseId,
+                start_cursor: nextCursor,
+                page_size: 100, // Lấy tối đa 100 dòng mỗi lần truy vấn
+                filter: {
+                    and: [
+                        {
+                            or: spacedTimeFilters
+                        },
+                        {
+                            property: "Status",
+                            status: {
+                                does_not_equal: notStatus
+                            }
                         }
-                    }
-                ]
-            }
-        });
+                    ]
+                }
+            });
+
+            allResults = [...allResults, ...response.results];
+            hasMore = response.has_more;
+            nextCursor = response.next_cursor || undefined;
+        }
 
         // Danh sách các cột cần lấy
         const requiredColumns = ["Word", "Type", "Status", "Level", "Spaced Time", "Pronounce", "Meaning", "Repeat"];
 
         // Xử lý và lọc dữ liệu
-        const filteredData = response.results.map((page: any) => {
+        const filteredData = allResults.map((page: any) => {
             const item: Record<string, any> = {
                 id: page.id,
                 url: page.url,
