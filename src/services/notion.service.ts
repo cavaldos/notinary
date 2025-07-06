@@ -5,7 +5,7 @@ import axiosinstance from './axios.config';
 const NotionService = {
     async getWordInprogress() {
         try {
-            const response = await axiosinstance.get(`/api/notion`); 
+            const response = await axiosinstance.get(`/api/notion`);
             return response
         }
         catch (error: any) {
@@ -78,7 +78,25 @@ const NotionService = {
                     error: error.message || 'Không thể cập nhật thuộc tính'
                 };
             }
-        }
+        },
+        async getSpacedTimeItems(pageSize: number, equalsValue: string) {
+            try {
+            
+                const response = await axiosinstance.post(`/api/notion/en/space`, {
+                    pageSize: pageSize,
+                    equalsValue: equalsValue
+                });
+                return response;
+            }
+            catch (error: any) {
+                console.error('Lỗi khi lấy dữ liệu từ Notion:', error);
+                return {
+                    success: false,
+                    error: error.message || 'Không thể lấy dữ liệu từ Notion'
+                };
+            }
+        },
+
     }
 }
 export default NotionService;

@@ -1,19 +1,20 @@
 
 'use client';
-
 import React from 'react';
-
-
+import { useRouter } from 'next/navigation';
 
 const Home: React.FC = () => {
-
+  const router = useRouter();
+  const navigate = (path: string) => {
+    router.push(path);
+  };
 
 
   const items = [
-    { label: "Level 1", path: "/games/level1" },
-    { label: "Level 2", path: "/games/level2" },
-    { label: "Level 3", path: "/games/level3" },
-    { label: "Level 4", path: "/games/level4" },
+    { label: "Familiar", path: "/Familiar" },
+    { label: "Competent", path: "/Competent" },
+    { label: "Expert", path: "/Expert" },
+    { label: "Mastery", path: "/Mastery" },
   ];
 
 
@@ -24,7 +25,7 @@ const Home: React.FC = () => {
         {items.map((item, index) => (
           <div
             key={index}
-            // onClick={() => navigate(item.path)}
+            onClick={() => navigate(item.path)}
             className="bg-white p-6 rounded-lg shadow text-center text-lg font-semibold hover:shadow-lg cursor-pointer"
           >
             {item.label}

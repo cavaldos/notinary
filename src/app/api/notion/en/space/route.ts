@@ -5,7 +5,7 @@ import NotionDatabase from '@/lib/notion-api-en';
 
 export async function POST(request: Request) {
     try {
-        const { pageSize, isEmpty, equalsValue } = await request.json();
+        const { pageSize, equalsValue } = await request.json();
 
         const databaseId = process.env.NOTION_DATABASE_EN_ID;
 
@@ -15,7 +15,10 @@ export async function POST(request: Request) {
                 { status: 400 }
             );
         }
-
+        let isEmpty = false;
+        if (equalsValue === "Familiar") {
+            isEmpty = true;
+        }
         const result = await NotionDatabase.getSpacedTimeItems(databaseId, pageSize, isEmpty, equalsValue);
 
         return NextResponse.json(
