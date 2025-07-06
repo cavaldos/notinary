@@ -2,11 +2,11 @@
 import React, { useState, useEffect, useRef, use } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 
-import { TempService } from './page';
+import { useDictionary } from '@/hooks/useDictionary';
 
 
 const SpaceLayout = ({ children }: { children: React.ReactNode }) => {
-    const { total, fetchData } = TempService();
+    const { total, fetchData } = useDictionary();
     const params = useParams();
     const space = params?.space as string;
 

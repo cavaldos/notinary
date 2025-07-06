@@ -1,58 +1,11 @@
 'use client'
 import React, { useState, useRef, useEffect, useCallback, use } from 'react';
 
-import Card from '@/components/card'
-
-import NotionService from '@/services/notion.service';
-
-export const TempService = () => {
-    const [total, setTotal] = useState(0);
-    const [dictionary, setDictionary] = useState([] as any[]);
-
-    // Fetch data from Notion API
-    const fetchData = async (space: string) => {
-        try {
-            const response: any = await NotionService.en.getSpacedTimeItems(300, space);
-
-            // Kiểm tra cấu trúc response trước khi filter
-            let dataToFilter = [];
-
-            if (response && Array.isArray(response.data)) {
-                dataToFilter = response.data;
-            } else if (response && Array.isArray(response)) {
-                dataToFilter = response;
-            } else {
-                console.error('Response không có cấu trúc mong đợi:', response);
-                setTotal(0);
-                setDictionary([]);
-                return;
-            }
-
-            // Filter những từ có word không null
-            const filteredData = dataToFilter.filter((item: any) =>
-                item && item.Word !== null && item.Word !== undefined && item.Word.trim() !== ''
-            );
-
-            setTotal(filteredData.length);
-            setDictionary(filteredData || []);
-        } catch (error) {
-            console.error('Error fetching vocabulary:', error);
-            setTotal(0);
-            setDictionary([]);
-        }
-    };
-
-    return {
-        total,
-        setTotal,
-        dictionary,
-        setDictionary,
-        fetchData
-    }
-};
+import Card from '@/components/card';
+import { useDictionary } from '@/hooks/useDictionary';
 
 const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
-    const { fetchData, dictionary } = TempService();
+    const { fetchData, dictionary } = useDictionary();
     const { space } = use(params);
 
     const [currentIndex, setCurrentIndex] = useState(0);

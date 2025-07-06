@@ -81,18 +81,31 @@ const NotionService = {
         },
         async getSpacedTimeItems(pageSize: number, equalsValue: string) {
             try {
-            
+                console.log(`Fetching spaced time items: pageSize=${pageSize}, space=${equalsValue}`);
                 const response = await axiosinstance.post(`/api/notion/en/space`, {
                     pageSize: pageSize,
                     equalsValue: equalsValue
                 });
+                console.log('API response received successfully');
                 return response;
             }
             catch (error: any) {
                 console.error('Lỗi khi lấy dữ liệu từ Notion:', error);
+
+                // Xử lý các loại lỗi khác nhau
+                let errorMessage = 'Không thể lấy dữ liệu từ Notion';
+                if (error.code === 'ECONNABORTED') {
+                    errorMessage = 'Yêu cầu bị timeout. Vui lòng thử lại sau.';
+                } else if (error.response) {
+                    errorMessage = `Lỗi server: ${error.response.status} - ${error.response.statusText}`;
+                } else if (error.request) {
+                    errorMessage = 'Không thể kết nối đến server. Kiểm tra kết nối mạng.';
+                }
+
                 return {
                     success: false,
-                    error: error.message || 'Không thể lấy dữ liệu từ Notion'
+                    error: errorMessage,
+                    originalError: error.message
                 };
             }
         },
