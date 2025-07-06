@@ -48,13 +48,8 @@ const NotionService = {
     },
 
     en: {
-        async updateSpacedTime(pageId: string, propertyName: string, selectValue: string, status: string) {
-            if (propertyName !== "Spaced Time") {
-                return {
-                    success: false,
-                    error: 'Tên thuộc tính không hợp lệ'
-                };
-            }
+        async updateSpacedTime(pageId: string, selectValue: string, status: string) {
+
 
             const levels = ["Familiar", "Competent", "Expert", "Mastery"];
 
@@ -89,7 +84,7 @@ const NotionService = {
             try {
                 const response = await axiosinstance.post(`/api/notion/query`, {
                     pageId: pageId,
-                    propertyName: propertyName,
+                    propertyName: "Spaced Time",
                     selectValue: newSelectValue // Sử dụng giá trị mới đã tính toán
                 });
                 return response;

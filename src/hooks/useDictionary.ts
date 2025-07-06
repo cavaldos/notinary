@@ -8,16 +8,13 @@ export const useDictionary = () => {
     const fetchData = useCallback(async (space: string) => {
         try {
             const response: any = await NotionService.en.getSpacedTimeItems(200, space);
-            console.log('response', response);
             if (response && response.data && Array.isArray(response.data)) {
                 const filteredData = response.data.filter(
                     (item: any) => item.Word !== null && item.Word.trim() !== ''
                 );
-                console.log('filteredData', filteredData);
                 setTotal(response.data.length);
                 setDictionary(filteredData || []);
             } else {
-                console.error('Invalid response format:', response);
                 setTotal(0);
                 setDictionary([]);
             }

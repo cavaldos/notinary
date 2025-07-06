@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Volume2, SquareChevronUp } from 'lucide-react';
+import { Volume2, SquareChevronUp, ArrowRight, ArrowLeft } from 'lucide-react';
 import NotionService from '@/services/notion.service';
+import { useParams } from 'next/navigation';
 interface CardProps {
     word: string;
     level: string;
@@ -15,7 +16,8 @@ interface CardProps {
 const CardSpace: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pronunciation }) => {
 
     const showMeaning = true;
-
+    const params = useParams();
+    const { space } = params;
     // Hàm phát âm thanh
     const speakWord = () => {
         if ('speechSynthesis' in window) {
@@ -39,10 +41,15 @@ const CardSpace: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pr
             alert('Trình duyệt của bạn không hỗ trợ phát âm thanh');
         }
     };
-    const UpdateToDone = async (idPage: any) => {
-        try {
-            await NotionService.upDateToDone(idPage);
 
+    const updateSpacedTime = async (idPage: any, selectValue: string, status: string) => {
+        try {
+            const response: any = await NotionService.en.updateSpacedTime(idPage, selectValue, status);
+            if (response.success) {
+                console.log('Cập nhật thành công:', response.data);
+            } else {
+                console.error('Cập nhật thất bại:', response.error);
+            }
         } catch (error) {
             console.error('Lỗi khi cập nhật:', error);
         }
@@ -100,11 +107,24 @@ const CardSpace: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pr
                 </div>
 
             </div>
-            <div
-                onClick={() => UpdateToDone(idPage)}
-                className='text-black rounded-full w-16 h-16 flex items-center justify-center bg-red-300
-                transition-colors mt-auto hover:bg-gray-100 active:bg-gray-200'>
-                <SquareChevronUp size={40} />
+
+            {/* Navigation buttons - Cải thiện CSS */}
+            <div className="flex items-center justify-center gap-10 mt-auto pt-6">
+                <button
+                    onClick={() => updateSpacedTime(idPage, space, 'down')}
+                    className="group flex items-center justify-center w-12 h-12 bg-beige rounded-md transition-all duration-200 hover:cursor-pointer"
+                    title="Thẻ trước"
+                >
+                    <ArrowLeft className="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" />
+                </button>
+
+                <button
+                    onClick={() => updateSpacedTime(idPage, space, 'up')}
+                    className="group flex items-center justify-center w-12 h-12 bg-beige rounded-md transition-all duration-200 hover:cursor-pointer"
+                    title="Thẻ tiếp theo"
+                >
+                    <ArrowRight className="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" />
+                </button>
             </div>
         </div>
     );
