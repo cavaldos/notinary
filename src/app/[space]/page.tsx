@@ -26,6 +26,13 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
         }
     }, []);
 
+    // Scroll down by 10 items
+    const scrollDownByTen = useCallback(() => {
+        const newIndex = Math.min(currentIndex + 30, dictionary.length - 1);
+        setCurrentIndex(newIndex);
+        scrollToCard(newIndex);
+    }, [currentIndex, dictionary.length, scrollToCard]);
+
     // Handle scroll event with snap effect
     useEffect(() => {
         const container = containerRef.current;
@@ -76,6 +83,15 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
                       mt-[30px] py-[5px] px-[10px] p-2 rounded-full text-center text-shadow-grey-dark font-bold'>
                 Dynamic Island ({currentIndex + 1}/{dictionary.length})
             </div> */}
+
+            {/* Scroll Down Button */}
+            <button
+                onClick={scrollDownByTen}
+                className="fixed bottom-[80px] right-8 z-50 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-full shadow-lg transition-colors duration-200"
+                disabled={currentIndex >= dictionary.length - 10}
+            >
+                ↓ 10
+            </button>
 
             <div
                 ref={containerRef}
