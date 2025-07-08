@@ -25,10 +25,11 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
             });
         }
     }, []);
+    const step = 30;
 
-    // Scroll down by 10 items
-    const scrollDownByTen = useCallback(() => {
-        const newIndex = Math.min(currentIndex + 30, dictionary.length - 1);
+    // Scroll down by 30 items
+    const scrollDown = useCallback(() => {
+        const newIndex = Math.min(currentIndex + step, dictionary.length - 1);
         setCurrentIndex(newIndex);
         scrollToCard(newIndex);
     }, [currentIndex, dictionary.length, scrollToCard]);
@@ -86,11 +87,11 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
 
             {/* Scroll Down Button */}
             <button
-                onClick={scrollDownByTen}
-                className="fixed bottom-[80px] right-8 z-50 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-full shadow-lg transition-colors duration-200"
+                onClick={scrollDown}
+                className="fixed bottom-[80px] right-5 z-50 bg-beige  text-grey-dark font-bold py-3 px-4 rounded-xl shadow-lg transition-colors duration-200"
                 disabled={currentIndex >= dictionary.length - 10}
             >
-                ↓ 10
+                ↓ {step}
             </button>
 
             <div
