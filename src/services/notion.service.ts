@@ -51,7 +51,7 @@ const NotionService = {
         async updateSpacedTime(pageId: string, selectValue: string, status: string) {
 
 
-            const levels = ["Familiar", "Competent", "Expert", "Mastery"];
+            const levels = ["Familiar", "Competent", "Expert", "Mastery", "Master+"];
 
             if (!levels.includes(selectValue)) {
                 return {
