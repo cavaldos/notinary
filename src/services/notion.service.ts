@@ -97,9 +97,12 @@ const NotionService = {
             }
         },
         async getSpacedTimeItems(pageSize: number, equalsValue: string) {
+            /**
+             * equalsValue could be: "L1", "L2", "L3", "L4", "L5"
+             */
             try {
                 console.log(`Fetching spaced time items: pageSize=${pageSize}, space=${equalsValue}`);
-                const response = await axiosinstance.post(`/api/notion/en/space`, {
+                const response = await axiosinstance.post(`/api/notion/en/space-cache`, {
                     pageSize: pageSize,
                     equalsValue: equalsValue
                 });

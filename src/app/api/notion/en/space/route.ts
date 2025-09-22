@@ -16,7 +16,7 @@ export async function POST(request: Request) {
             );
         }
         let isEmpty = false;
-        if (equalsValue === "Familiar") {
+        if (equalsValue === "L1") {
             isEmpty = true;
         }
         const result = await NotionDatabase.getSpacedTimeItems(databaseId, pageSize, isEmpty, equalsValue);
