@@ -18,23 +18,23 @@ const SpaceLayout = ({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
 
     const Item = [{
-        label: "Level 1",
+        label: "L1",
         path: "/L1"
     },
     {
-        label: "Level 2",
+        label: "L2",
         path: "/L2"
     },
     {
-        label: "Level 3",
+        label: "L3",
         path: "/L3"
     },
     {
-        label: "Level 4",
+        label: "L4",
         path: "/L4"
     },
     {
-        label: "Level 5",
+        label: "L5",
         path: "/L5"
     }];
 
