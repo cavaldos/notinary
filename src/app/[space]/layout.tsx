@@ -18,20 +18,24 @@ const SpaceLayout = ({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
 
     const Item = [{
-        label: "Fa",
-        path: "/Familiar"
+        label: "Level 1",
+        path: "/L1"
     },
     {
-        label: "Co",
-        path: "/Competent"
+        label: "Level 2",
+        path: "/L2"
     },
     {
-        label: "Ex",
-        path: "/Expert"
+        label: "Level 3",
+        path: "/L3"
     },
     {
-        label: "Ma",
-        path: "/Mastery"
+        label: "Level 4",
+        path: "/L4"
+    },
+    {
+        label: "Level 5",
+        path: "/L5"
     }];
 
     // Hàm để reset timeout
@@ -111,7 +115,7 @@ const SpaceLayout = ({ children }: { children: React.ReactNode }) => {
                     <div
                         className="cursor-pointer hover:opacity-80 transition-opacity"
                     >
-                        {space} {total > 0 ? `${total}` : ''}
+                        {space} -  {total > 0 ? `${total}` : ''}
                     </div>
                 ) : (
                     <div className="flex items-center justify-between w-full px-2 transition-all duration-300">

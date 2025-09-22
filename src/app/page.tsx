@@ -11,10 +11,11 @@ const Home: React.FC = () => {
 
 
   const items = [
-    { label: "Familiar", path: "/Familiar" },
-    { label: "Competent", path: "/Competent" },
-    { label: "Expert", path: "/Expert" },
-    { label: "Mastery", path: "/Mastery" },
+    { label: "Level 1", path: "/L1" },
+    { label: "Level 2", path: "/L2" },
+    { label: "Level 3", path: "/L3" },
+    { label: "Level 4", path: "/L4" },
+    // { label: "Level 5", path: "/L5" },
   ];
 
 
