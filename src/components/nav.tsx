@@ -27,7 +27,7 @@ const Navbar: React.FC = () => {
                                  transition-all duration-200 bg-beige text-black custom_sd2 `}
                         >
                             <Gamepad2 size={18} className="mr-2" />
-                            <span className="">Games</span>
+                            <span className="">auto</span>
                         </button>
 
                         {/* Setting Button */}
