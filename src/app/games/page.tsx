@@ -8,7 +8,8 @@ import Card from '@/components/cardspace';
 
 const GamesPage: React.FC = () => {
     const { fetchData, dictionary } = useDictionary();
-    const space = 'L2'; // Static space for games page
+    const [space, setSpace] = useState('L2'); // Space có thể thay đổi
+    const spaceOptions = ['L1', 'L2', 'L3', 'L4']; // Các tùy chọn space
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isAutoPlay, setIsAutoPlay] = useState(false);
@@ -16,6 +17,14 @@ const GamesPage: React.FC = () => {
     const speedOptions = [1, 2, 3, 4, 5, 8]; // Các tùy chọn tốc độ
     const containerRef = useRef<HTMLDivElement>(null);
     const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+    // Chuyển đổi space
+    const cycleSpace = () => {
+        const currentSpaceIndex = spaceOptions.indexOf(space);
+        const nextIndex = (currentSpaceIndex + 1) % spaceOptions.length;
+        setSpace(spaceOptions[nextIndex]);
+        setCurrentIndex(0); // Reset về từ đầu tiên khi đổi space
+    };
 
     // Chuyển đổi tốc độ
     const cycleSpeed = () => {
@@ -134,6 +143,14 @@ const GamesPage: React.FC = () => {
 
     return (
         <div className="flex flex-col h-screen mb-[20px] w-full max-w-full">
+            {/* Space toggle button */}
+            <button
+                onClick={cycleSpace}
+                className="fixed top-5 left-5 z-50 bg-beige text-grey-dark font-bold py-3 px-4 rounded-xl shadow-lg transition-colors duration-200"
+            >
+                📚 {space} ({dictionary.length})
+            </button>
+
             {/* Auto-play toggle button */}
             <button
                 onClick={() => setIsAutoPlay(!isAutoPlay)}
