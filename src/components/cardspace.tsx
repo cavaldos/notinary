@@ -31,8 +31,8 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
 
             // Cấu hình giọng nói
             utterance.lang = 'en-US'; // Đặt ngôn ngữ tiếng Anh
-            utterance.rate = 0.8; // Tốc độ nói (0.1 - 10)
-            utterance.pitch = 1; // Cao độ giọng (0 - 2)
+            utterance.rate = 0.75; // Tốc độ nói (0.1 - 10)
+            utterance.pitch = 0.4; // Cao độ giọng (0 - 2), thấp hơn = trầm hơn
             utterance.volume = 1; // Âm lượng (0 - 1)
 
             // Phát âm

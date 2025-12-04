@@ -13,7 +13,7 @@ const GamesPage: React.FC = () => {
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isAutoPlay, setIsAutoPlay] = useState(false);
-    const [autoPlaySpeed, setAutoPlaySpeed] = useState(4); // Tốc độ mặc định 4 giây
+    const [autoPlaySpeed, setAutoPlaySpeed] = useState(2); // Tốc độ mặc định 2 giây
     const speedOptions = [1, 2, 3, 4, 5, 8]; // Các tùy chọn tốc độ
     const containerRef = useRef<HTMLDivElement>(null);
     const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
