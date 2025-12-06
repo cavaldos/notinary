@@ -4,6 +4,7 @@ import React from 'react';
 import { Volume2, ArrowRight, ArrowLeft } from 'lucide-react';
 import NotionService from '@/services/notion.service';
 import { useParams } from 'next/navigation';
+import useTextToSpeech from '@/hooks/useTextToSpeech';
 
 interface CardProps {
     index: number;
@@ -20,57 +21,13 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
     const params = useParams();
     const { space } = params;
 
-    // Hàm phát âm thanh
+    const { speak, stop } = useTextToSpeech();
+
+    // Hàm phát âm thanh (sử dụng hook chung)
     const speakWord = () => {
-        if ('speechSynthesis' in window) {
-            // Dừng phát âm hiện tại nếu có
-            window.speechSynthesis.cancel();
-
-            // Lấy ngôn ngữ từ biến môi trường, mặc định là 'en'
-            const speechLanguage = process.env.NEXT_PUBLIC_SPEECH_LANGUAGE || 'en';
-
-            // Cấu hình theo ngôn ngữ
-            let langCode = 'en-US';
-            let rate = 0.75;
-            let pitch = 0.4;
-            let langPrefix = 'en';
-
-            if (speechLanguage === 'fr') {
-                langCode = 'fr-FR';
-                rate = 0.8;
-                pitch = 1;
-                langPrefix = 'fr';
-            }
-
-            // Tạo utterance mới
-            const utterance = new SpeechSynthesisUtterance(word);
-
-            // Cấu hình giọng nói
-            utterance.lang = langCode;
-            utterance.rate = rate;
-            utterance.pitch = pitch;
-            utterance.volume = 1;
-
-            // Tìm giọng nói phù hợp theo ngôn ngữ
-            const voices = window.speechSynthesis.getVoices();
-            const matchingVoice = voices.find(voice =>
-                voice.lang.startsWith(langPrefix) ||
-                (langPrefix === 'fr' && voice.name.toLowerCase().includes('french')) ||
-                (langPrefix === 'en' && voice.name.toLowerCase().includes('english'))
-            );
-
-            if (matchingVoice) {
-                utterance.voice = matchingVoice;
-            }
-
-            // Phát âm
-            window.speechSynthesis.speak(utterance);
-        } else {
-            // Fallback cho các trình duyệt không hỗ trợ
-            console.warn('Trình duyệt không hỗ trợ Text-to-Speech');
-            alert('Trình duyệt của bạn không hỗ trợ phát âm thanh');
-        }
+        speak(word, { language: process.env.NEXT_PUBLIC_SPEECH_LANGUAGE || 'en' });
     };
+
 
     const updateSpacedTime = async (idPage: any, selectValue: string, status: string) => {
         try {

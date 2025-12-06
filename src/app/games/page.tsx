@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 import { useDictionary } from '@/hooks/useDictionary';
 import Card from '@/components/cardspace';
+import useTextToSpeech from '@/hooks/useTextToSpeech';
 
 
 const GamesPage: React.FC = () => {
@@ -47,21 +48,15 @@ const GamesPage: React.FC = () => {
         }
     }, []);
 
+    const { speak } = useTextToSpeech();
+
     // Hàm phát âm từ hiện tại
     const speakCurrentWord = useCallback(() => {
         if (dictionary.length > 0 && dictionary[currentIndex]) {
             const word = dictionary[currentIndex].Word;
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(word);
-                utterance.lang = 'en-US';
-                utterance.rate = 0.8;
-                utterance.pitch = 1;
-                utterance.volume = 1;
-                window.speechSynthesis.speak(utterance);
-            }
+            speak(word, { language: process.env.NEXT_PUBLIC_SPEECH_LANGUAGE || 'en', rate: 0.8, pitch: 1 });
         }
-    }, [dictionary, currentIndex]);
+    }, [dictionary, currentIndex, speak]);
 
     // Chuyển sang từ tiếp theo
     const goToNextWord = useCallback(() => {
