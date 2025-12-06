@@ -29,6 +29,19 @@ const NotionService = {
             };
         }
     },
+    async resetCache() {
+        try {
+            const response = await axiosinstance.post(`/api/cache`);
+            return response;
+        }
+        catch (error: any) {
+            console.error('Lỗi khi xóa cache:', error);
+            return {
+                success: false,
+                error: error.message || 'Không thể xóa cache'
+            };
+        }
+    },
     async upDateToDone(id: string) {
         try {
             const response = await axiosinstance.post(`/api/notion`,

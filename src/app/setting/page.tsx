@@ -1,10 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import NotionService from '@/services/notion.service';
 
 const Setting: React.FC = () => {
     const navigate = useRouter().push;
+    const [resetting, setResetting] = useState(false);
     const items = [
         {
             label: "Vault",
@@ -16,6 +18,21 @@ const Setting: React.FC = () => {
         },
 
     ];
+
+    const handleResetCache = async () => {
+        setResetting(true);
+        try {
+            const response: any = await NotionService.resetCache();
+            if (response?.success) {
+            } else {
+            }
+        } catch (error: any) {
+            console.error('Lỗi khi reset cache:', error);
+            alert('Xảy ra lỗi khi reset cache');
+        } finally {
+            setResetting(false);
+        }
+    };
 
     return (
         <div className="flex flex-col items-center justify-center h-[85%] font-bold p-6">
@@ -29,6 +46,11 @@ const Setting: React.FC = () => {
                         {item.label}
                     </li>
                 ))}
+                <li
+                    onClick={handleResetCache}
+                    className="bg-white p-4 rounded-full shadow-md text-center text-lg hover:shadow-lg hover:cursor-pointer text-red-600">
+                    {resetting ? 'Resetting cache...' : 'Reset Cache'}
+                </li>
             </ul>
         </div>
     );
