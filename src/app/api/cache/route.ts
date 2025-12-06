@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
 export async function POST() {
     try {
         // Revalidate the cache tag
-        revalidateTag('notion-data');
+        revalidateTag('notion-data', 'max');
 
         return NextResponse.json({
             success: true,

@@ -65,7 +65,7 @@ export async function POST(request: Request) {
 export async function DELETE() {
     try {
         // Revalidate the cache tag
-        revalidateTag('notion-spaced-time-data');
+        revalidateTag('notion-spaced-time-data', 'max');
 
         return NextResponse.json({
             success: true,
