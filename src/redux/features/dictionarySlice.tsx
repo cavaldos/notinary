@@ -30,7 +30,7 @@ export const fetchDictionaryData = createAsyncThunk(
     'dictionary/fetchData',
     async (space: string, { rejectWithValue }) => {
         try {
-            const response: any = await NotionService.en.getSpacedTimeItems(200, space);
+            const response: any = await NotionService.getSpacedTimeItems(200, space);
             if (response && response.data && Array.isArray(response.data)) {
                 const filteredData = response.data.filter(
                     (item: any) => item.Word !== null && item.Word.trim() !== ''

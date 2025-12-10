@@ -117,7 +117,7 @@ export const getFilteredDatabaseItems = async (databaseId: string): Promise<any>
         }
 
         // Danh sách các cột cần lấy
-        const requiredColumns = ["Word", "Type", "Status", "Level", "Spaced Time", "Pronounce", "Meaning", "Repeat"];
+        const requiredColumns = ["Word", "Type", "Status", "Level", "Spaced Time", "Pronounce", "Meaning", "Repeat", "Genre"];
 
         // Xử lý và lọc dữ liệu
         const filteredData = allResults.map((page: any) => {
@@ -181,7 +181,8 @@ export const getInProgressItems = async (databaseId: string, pageSize: number = 
         });
 
         // Danh sách các cột cần lấy
-        const requiredColumns = ["Word", "Type", "Status", "Level", "Spaced Time", "Pronounce", "Meaning", "Repeat"];
+        const requiredColumns = ["Word", "Type", "Status", "Level", "Spaced Time", "Pronounce", "Meaning", "Repeat", "Genre"];
+
 
         // Xử lý và lọc dữ liệu
         const filteredData = response.results.map((page: any) => {
@@ -277,7 +278,8 @@ export const getSpacedTimeItems = async (
         }
 
         // Danh sách các cột cần lấy
-        const requiredColumns = ["Word", "Type", "Status", "Level", "Spaced Time", "Pronounce", "Meaning", "Repeat"];
+        const requiredColumns = ["Word", "Type", "Status", "Level", "Spaced Time", "Pronounce", "Meaning", "Repeat", "Genre"];
+
 
         // Xử lý và lọc dữ liệu
         const filteredData = allResults.map((page: any) => {

@@ -31,7 +31,7 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
 
     const updateSpacedTime = async (idPage: any, selectValue: string, status: string) => {
         try {
-            const response: any = await NotionService.en.updateSpacedTime(idPage, selectValue, status);
+            const response: any = await NotionService.updateSpacedTime(idPage, selectValue, status);
             if (response.success) {
                 console.log('Cập nhật thành công:', response.data);
             } else {
