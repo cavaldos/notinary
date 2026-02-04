@@ -1,5 +1,6 @@
 'use client'
 import React, { useState, useRef, useEffect, useCallback, use } from 'react';
+import { ArrowDown } from 'lucide-react';
 
 import Card from '@/components/cardspace';
 import { useDictionary } from '@/hooks/useDictionary';
@@ -88,10 +89,10 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
             {/* Scroll Down Button */}
             <button
                 onClick={scrollDown}
-                className="fixed bottom-[80px] right-5 z-50 bg-beige  text-grey-dark font-bold py-3 px-4 rounded-xl shadow-lg transition-colors duration-200"
+                className="fixed bottom-[80px] right-5 z-50 bg-beige text-gray-800 font-bold py-3 px-4 rounded-xl shadow-lg transition-colors duration-200 flex items-center gap-2"
                 disabled={currentIndex >= dictionary.length - 10}
             >
-                ↓ {step}
+                <ArrowDown className="w-5 h-5" /> {step}
             </button>
 
             <div

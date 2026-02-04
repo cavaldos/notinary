@@ -24,7 +24,7 @@ const Setting: React.FC = () => {
                 {items.map((item, index) => (
                     <li
                         onClick={() => navigate(item.path)}
-                        key={index} className="bg-white p-4 rounded-full shadow-md text-center text-lg
+                        key={index} className="bg-white text-gray-900 p-4 rounded-full shadow-md text-center text-lg
                                                  hover:shadow-lg hover:cursor-pointer">
                         {item.label}
                     </li>

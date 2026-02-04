@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ProviderGlobal from "../redux/provider";
 import Navbar from "../components/nav";
+import ThemeRoot from "../components/theme-root";
 export const metadata: Metadata = {
   title: "Notirary",
   description: "A Notion-like app for vocabulary learning",
@@ -39,10 +40,12 @@ export default function RootLayout({
         suppressHydrationWarning={true}
       >
         <ProviderGlobal>
-          <div className="flex flex-col h-screen bg-notion-background">
-            {children}
-            <Navbar />
-          </div>
+          <ThemeRoot>
+            <div className="flex flex-col h-screen bg-notion-background">
+              {children}
+              <Navbar />
+            </div>
+          </ThemeRoot>
         </ProviderGlobal>
       </body>
     </html>

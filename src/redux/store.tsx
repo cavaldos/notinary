@@ -1,4 +1,5 @@
 import countSlice from './features/countSlice';
+import settingSlice from './features/settingSlice';
 
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import {
@@ -23,10 +24,11 @@ const persistConfig = {
     key: 'root',
     version: 1,
     storage,
-    whitelist: ['count'], // You probably want to persist the count slice
+    whitelist: ['count', 'setting'],
 };
 const rootReducer = combineReducers({
-    count: countSlice
+    count: countSlice,
+    setting: settingSlice,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

@@ -107,7 +107,7 @@ const SpaceLayout = ({ children }: { children: React.ReactNode }) => {
                 onClick={handleDynamicClick}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
-                className={`fixed top-0 left-0 right-0 z-50 bg-beige mx-auto transition-all duration-300 ease-in-out
+                className={`fixed top-0 left-0 right-0 z-50 bg-beige text-grey-dark mx-auto transition-all duration-300 ease-in-out
                       mt-[30px] py-[5px] px-[10px] p-2 rounded-full text-center text-shadow-grey-dark font-bold
                       ${isExpanded ? 'max-w-[80%]' : 'max-w-[60%]'}`}>
 
@@ -124,7 +124,7 @@ const SpaceLayout = ({ children }: { children: React.ReactNode }) => {
                                 key={index}
                                 onClick={(e) => handleItemClick(item.path, e)}
                                 onMouseEnter={handleMouseEnter}
-                                className="flex-1 mx-1 px-4 py-1 bg-white bg-opacity-20 hover:bg-opacity-30 ease-in-out
+                                className="flex-1 mx-1 px-4 py-1 bg-beige-strong text-grey-dark hover:brightness-105 ease-in-out
                                          rounded-full text-sm font-medium transition-all duration-200
                                          hover:scale-105 active:scale-95 text-center"
                             >

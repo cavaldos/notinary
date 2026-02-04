@@ -10,41 +10,128 @@
   
   --font-primary: "Comic Relief", sans-serif;
   
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color-scheme: light;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --color-grey-light: #A6A6A4;
-  --color-beige: #F2F0E9;
-  --color-grey-dark: #403E3C;
-  --color-grey-medium: #D9D6D0;
-  --color-black: #0D0D0D;
-  background-color: #E1DBC7;
-  color: var(--color-black);
+  --app-color-grey-light: #A6A6A4;
+  --app-color-beige: #EBE9DF;
+  --app-color-grey-dark: #403E3C;
+  --app-color-grey-medium: #D9D6D0;
+  --app-color-black: #0D0D0D;
+  --app-color-notion-background: #E1DBC7;
+  --color-text-primary: #1F1F1F;
+  --color-text-secondary: #4B4B4B;
+  --color-text-muted: #7A7A7A;
+  --color-surface: #FFFFFF;
+  --color-surface-rgb: 255 255 255;
+  --color-surface-alt: #F3F0E6;
+  --app-color-beige-strong: #DAD5C7;
+  --shadow-soft: 0 0 15px 7px rgba(55, 55, 55, 0.15);
+  --shadow-hard: 0 0 15px 6px rgba(55, 55, 55, 0.20);
+  background-color: var(--app-color-notion-background);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --app-color-grey-light: #B5B5B5;
+  --app-color-beige: #404040;
+  --app-color-beige-strong: #4A4A4A;
+  --app-color-grey-dark: #1a1a1a;
+  --app-color-grey-medium: #5B5B5B;
+  --app-color-black: #1a1a1a;
+  --app-color-notion-background: #262626;
+  --color-text-primary: #F5F5F5;
+  --color-text-secondary: #D0D0D0;
+  --color-text-muted: #A0A0A0;
+  --color-surface: #404040;
+  --color-surface-rgb: 64 64 64;
+  --color-surface-alt: #333333;
+  --shadow-soft: 0 0 15px 7px rgba(0, 0, 0, 0.45);
+  --shadow-hard: 0 0 15px 6px rgba(0, 0, 0, 0.55);
+}
+
+body {
+  background-color: var(--app-color-notion-background);
+  color: var(--color-text-primary);
 }
 @theme inline {
   --font-display: "Comic Relief", "JetBrains Mono", "Space Mono", system-ui, Helvetica, Arial, sans-serif;
   --breakpoint-3xl: 1920px;
-  --color-grey-light:#A6A6A4;
-  --color-beige: #EBE9DF;  /*#efede7;*/
-  --color-grey-dark: #403E3C;
-  --color-grey-medium: #D9D6D0;
-  --color-black:  rgb(61,61,61) ;/*#0D0D0D;*/
-  --color-notion-background:  #E1DBC7;  /* #EEECE0; #efebe0 */
+  --color-grey-light: var(--app-color-grey-light);
+  --color-beige: var(--app-color-beige);
+  --color-beige-strong: var(--app-color-beige-strong);
+  --color-grey-dark: var(--app-color-grey-dark);
+  --color-grey-medium: var(--app-color-grey-medium);
+  --color-black: var(--app-color-black);
+  --color-notion-background: var(--app-color-notion-background);
 
   --ease-fluid: cubic-bezier(0.3, 0, 0, 1);
   --ease-snappy: cubic-bezier(0.2, 0, 0, 1);
 }
 
 .custom_sd{
-  box-shadow: 0 0 15px 7px rgba(55, 55, 55, 0.15);
+  box-shadow: var(--shadow-soft);
 }
 
 .custom_sd2{
-  box-shadow: 0 0 15px 6px rgba(55, 55, 55, 0.20);
+  box-shadow: var(--shadow-hard);
+}
+
+[data-theme="dark"] .bg-white {
+  background-color: rgb(var(--color-surface-rgb) / var(--tw-bg-opacity, 1));
+}
+
+[data-theme="dark"] .text-black,
+[data-theme="dark"] .text-grey-dark,
+[data-theme="dark"] .text-shadow-grey-dark {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .text-gray-900,
+[data-theme="dark"] .text-gray-800 {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .text-gray-700,
+[data-theme="dark"] .text-gray-600 {
+  color: var(--color-text-secondary);
+}
+
+[data-theme="dark"] .text-gray-400 {
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .bg-gray-100 {
+  background-color: var(--color-surface-alt);
+}
+
+[data-theme="dark"] .bg-gray-200 {
+  background-color: #353535;
+}
+
+[data-theme="dark"] .hover\:bg-gray-100:hover {
+  background-color: var(--color-surface-alt);
+}
+
+[data-theme="dark"] .active\:bg-gray-200:active {
+  background-color: #353535;
+}
+
+[data-theme="dark"] .shadow-lg {
+  box-shadow: var(--shadow-hard);
+}
+
+[data-theme="dark"] .shadow-md {
+  box-shadow: var(--shadow-soft);
+}
+
+/* Keep tag text dark on colored backgrounds in dark mode */
+[data-theme="dark"] .bg-\[\#dcebdd\],
+[data-theme="dark"] .bg-\[\#fbded9\] {
+  color: #1f2937;
 }

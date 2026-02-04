@@ -77,12 +77,16 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
             <div className="space-y-4">
                 {/* Type và Level tags */}
                 <div className="flex items-center justify-center gap-2 mb-4">
-                    <span className="inline-block bg-[#dcebdd] text-black px-3 py-1 rounded-md text-sm font-medium">
-                        {type}
-                    </span>
-                    <span className="inline-block bg-[#fbded9] text-black px-3 py-1 rounded-md text-sm font-medium">
-                        {level}
-                    </span>
+                    {type && (
+                        <span className="inline-block bg-[#dcebdd] text-gray-800 px-3 py-1 rounded-md text-sm font-medium">
+                            {type}
+                        </span>
+                    )}
+                    {level && (
+                        <span className="inline-block bg-[#fbded9] text-gray-800 px-3 py-1 rounded-md text-sm font-medium">
+                            {level}
+                        </span>
+                    )}
                 </div>
 
                 {/* Example với tính năng ẩn/hiện */}

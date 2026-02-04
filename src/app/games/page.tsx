@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { BookOpen, Clock, Play, Pause, ArrowDown } from 'lucide-react';
 
 import { useDictionary } from '@/hooks/useDictionary';
 import Card from '@/components/cardspace';
@@ -141,35 +142,34 @@ const GamesPage: React.FC = () => {
             {/* Space toggle button */}
             <button
                 onClick={cycleSpace}
-                className="fixed top-5 left-5 z-50 bg-beige text-grey-dark font-bold py-3 px-4 rounded-xl shadow-lg transition-colors duration-200"
+                className="fixed top-5 left-5 z-50 bg-beige text-gray-800 font-bold py-3 px-4 rounded-xl shadow-lg transition-colors duration-200 flex items-center gap-2"
             >
-                📚 {space} ({dictionary.length})
+                <BookOpen className="w-5 h-5" /> {space} ({dictionary.length})
             </button>
 
             {/* Auto-play toggle button */}
             <button
                 onClick={() => setIsAutoPlay(!isAutoPlay)}
-                className={`fixed top-5 right-5 z-50 font-bold py-3 px-4 rounded-xl shadow-lg transition-colors duration-200 ${isAutoPlay ? 'bg-beige text-grey-dark' : 'bg-beige text-grey-dark'
-                    }`}
+                className="fixed top-5 right-5 z-50 bg-beige text-gray-800 font-bold py-3 px-4 rounded-xl shadow-lg transition-colors duration-200 flex items-center gap-2"
             >
-                {isAutoPlay ? '⏸ Auto' : '▶ Auto'}
+                {isAutoPlay ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             </button>
 
             {/* Speed toggle button */}
             <button
                 onClick={cycleSpeed}
-                className="fixed top-5 right-32 z-50 bg-beige text-grey-dark font-bold py-3 px-4 rounded-xl shadow-lg transition-colors duration-200"
+                className="fixed top-5 right-32 z-50 bg-beige text-gray-800 font-bold py-3 px-4 rounded-xl shadow-lg transition-colors duration-200 flex items-center gap-2"
             >
-                🕐 {autoPlaySpeed}s
+                <Clock className="w-5 h-5" /> {autoPlaySpeed}s
             </button>
 
             {/* Scroll Down Button */}
             <button
                 onClick={scrollDown}
-                className="fixed bottom-[80px] right-5 z-50 bg-beige text-grey-dark font-bold py-3 px-4 rounded-xl shadow-lg transition-colors duration-200"
+                className="fixed bottom-[80px] right-5 z-50 bg-beige text-gray-800 font-bold py-3 px-4 rounded-xl shadow-lg transition-colors duration-200 flex items-center gap-2"
                 disabled={currentIndex >= dictionary.length - 10}
             >
-                ↓ {step}
+                <ArrowDown className="w-5 h-5" /> {step}
             </button>
 
             <div
