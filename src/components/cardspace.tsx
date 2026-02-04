@@ -52,7 +52,7 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
     };
 
     return (
-        <div className="text-center mb-8 py-4 rounded-lg min-w-[500px] flex flex-col items-center justify-center  h-[400px]">
+        <div className="text-center mb-8 py-4 rounded-lg w-full max-w-[500px] flex flex-col items-center justify-center min-h-[400px] h-auto">
 
             <h1 className="text-4xl font-bold text-gray-900 mb-6 select-none">
                 {word}
@@ -92,11 +92,11 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
                     </div>
 
                     {showMeaning ? (
-                        <p className="text-gray-600 text-lg leading-relaxed select-none">
+                        <p className="text-gray-600 text-lg leading-relaxed select-none whitespace-normal break-words">
                             {meaning}
                         </p>
                     ) : (
-                        <p className="text-gray-400 text-lg leading-relaxed blur-sm select-none">
+                        <p className="text-gray-400 text-lg leading-relaxed blur-sm select-none whitespace-normal break-words">
                             {meaning}
                         </p>
                     )}
