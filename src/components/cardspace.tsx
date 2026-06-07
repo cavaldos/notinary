@@ -14,9 +14,10 @@ interface CardProps {
     type: string;
     meaning: string;
     pronunciation: string;
+    example?: string;
 }
 
-const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, meaning, pronunciation }) => {
+const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, meaning, pronunciation, example }) => {
     const showMeaning = true;
     const params = useParams();
     const { space } = params;
@@ -52,7 +53,7 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
     };
 
     return (
-        <div className="text-center mb-8 py-4 rounded-lg w-full max-w-[500px] flex flex-col items-center justify-center min-h-[400px] h-auto">
+        <div className="text-center mb-15 py-4 rounded-lg w-full max-w-[500px] flex flex-col items-center justify-center min-h-[400px] h-auto">
 
             <h1 className="text-4xl font-bold text-gray-900 mb-6 select-none">
                 {word}
@@ -89,7 +90,7 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
                     )}
                 </div>
 
-                {/* Example với tính năng ẩn/hiện */}
+                {/* Meaning */}
                 <div className="max-w-md mx-auto">
                     <div className="flex items-center justify-center mb-2">
                         <span className="font-semibold text-gray-600 mr-2">{index}</span>
@@ -105,6 +106,15 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
                         </p>
                     )}
                 </div>
+
+                {/* Example sentence */}
+                {example && (
+                    <div className="max-w-md mx-auto mt-4 p-1 bg-beige rounded-md">
+                        <p className="text-gray-700 text-sm italic leading-relaxed select-none whitespace-normal break-words">
+                            "{example}"
+                        </p>
+                    </div>
+                )}
 
             </div>
 

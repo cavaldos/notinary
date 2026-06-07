@@ -192,6 +192,7 @@ const GamesPage: React.FC = () => {
                             type={item.Type}
                             pronunciation={item.Pronounce}
                             meaning={item.Meaning}
+                            example={item.Example}
                         />
                     </div>
                 ))}

@@ -9,10 +9,11 @@ interface CardProps {
     type: string;
     meaning: string;
     pronunciation: string;
-    idPage: string; // Thêm idPage để xác định trang trong Notion
+    idPage: string;
+    example?: string;
 }
 
-const Card: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pronunciation }) => {
+const Card: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pronunciation, example }) => {
 
     const showMeaning = true;
 
@@ -86,7 +87,7 @@ const Card: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pronunc
                     )}
                 </div>
 
-                {/* Example với tính năng ẩn/hiện */}
+                {/* Meaning */}
                 <div className="max-w-md mx-auto">
                     <div className="flex items-center justify-center mb-2">
                         <span className="font-semibold text-gray-600 mr-2">Mean:</span>
@@ -102,6 +103,15 @@ const Card: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pronunc
                         </p>
                     )}
                 </div>
+
+                {/* Example sentence */}
+                {example && (
+                    <div className="max-w-md mx-auto mt-4 p-3 bg-beige rounded-md">
+                        <p className="text-gray-700 text-sm italic leading-relaxed select-none whitespace-normal break-words">
+                            "{example}"
+                        </p>
+                    </div>
+                )}
 
             </div>
             <button

@@ -106,6 +106,10 @@ body {
   color: var(--color-text-muted);
 }
 
+[data-theme="dark"] .bg-gray-50 {
+  background-color: var(--color-surface-alt);
+}
+
 [data-theme="dark"] .bg-gray-100 {
   background-color: var(--color-surface-alt);
 }
@@ -128,6 +132,10 @@ body {
 
 [data-theme="dark"] .shadow-md {
   box-shadow: var(--shadow-soft);
+}
+
+[data-theme="dark"] .border-gray-200 {
+  border-color: #4a4a4a;
 }
 
 /* Keep tag text dark on colored backgrounds in dark mode */
