@@ -92,10 +92,6 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
 
                 {/* Meaning */}
                 <div className="max-w-md mx-auto">
-                    <div className="flex items-center justify-center mb-2">
-                        <span className="font-semibold text-gray-600 mr-2">{index}</span>
-                    </div>
-
                     {showMeaning ? (
                         <p className="text-gray-600 text-lg leading-relaxed select-none whitespace-normal break-words">
                             {meaning}
@@ -119,7 +115,7 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
             </div>
 
             {/* Navigation buttons - Cải thiện CSS */}
-            <div className="flex items-center justify-center gap-10 mt-auto pt-6">
+            <div className="flex items-center justify-center gap-5 mt-auto pt-6">
                 <button
                     onClick={() => handleSpaceUpdate('down')}
                     className="group flex items-center justify-center w-12 h-12 bg-beige rounded-md transition-all duration-200 hover:cursor-pointer"
@@ -127,7 +123,9 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
                 >
                     <ArrowLeft className="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" />
                 </button>
-
+                <div className="flex items-center justify-center">
+                    <span className="font-semibold text-gray-600">{index}</span>
+                </div>
                 <button
                     onClick={() => handleSpaceUpdate('up')}
                     className="group flex items-center justify-center w-12 h-12 bg-beige rounded-md transition-all duration-200 hover:cursor-pointer"
