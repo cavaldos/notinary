@@ -15,11 +15,7 @@ export async function POST(request: Request) {
                 { status: 400 }
             );
         }
-        let isEmpty = false;
-        if (equalsValue === "L1") {
-            isEmpty = true;
-        }
-        const result = await NotionDatabase.getSpacedTimeItems(databaseId, pageSize, isEmpty, equalsValue);
+        const result = await NotionDatabase.getSpacedTimeItems(databaseId, pageSize, false, equalsValue);
 
         return NextResponse.json(
             {
