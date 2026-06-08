@@ -1,5 +1,6 @@
 import countSlice from './features/countSlice';
 import settingSlice from './features/settingSlice';
+import dictionarySlice from './features/dictionarySlice';
 
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import {
@@ -29,6 +30,7 @@ const persistConfig = {
 const rootReducer = combineReducers({
     count: countSlice,
     setting: settingSlice,
+    dictionary: dictionarySlice,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

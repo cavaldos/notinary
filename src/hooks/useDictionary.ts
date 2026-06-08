@@ -1,35 +1,46 @@
-import { useState, useCallback } from 'react';
-import NotionService from '@/services/notion.service';
+import { useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchDictionaryData, setDictionary } from '@/redux/features/dictionarySlice';
+import type { AppDispatch, RootState } from '@/redux/store';
+import type { DictionaryItem } from '@/redux/features/dictionarySlice';
 
-export const useDictionary = () => {
-    const [total, setTotal] = useState(0);
-    const [dictionary, setDictionary] = useState([] as any[]);
-
-    const fetchData = useCallback(async (space: string) => {
-        try {
-            const response: any = await NotionService.getSpacedTimeItems(200, space);
-            if (response && response.data && Array.isArray(response.data)) {
-                const filteredData = response.data.filter(
-                    (item: any) => item.Word !== null && item.Word.trim() !== ''
-                );
-                setTotal(response.data.length);
-                setDictionary(filteredData || []);
-            } else {
-                setTotal(0);
-                setDictionary([]);
-            }
-        } catch (error) {
-            console.error('Error fetching vocabulary:', error);
-            setTotal(0);
-            setDictionary([]);
+export const useDictionary = (space?: string) => {
+    const dispatch = useDispatch<AppDispatch>();
+    const currentSpace = useSelector((state: RootState) => space ?? state.dictionary.currentSpace);
+    const spaceState = useSelector((state: RootState) => {
+        if (!currentSpace) {
+            return undefined;
         }
-    }, []);
+
+        return state.dictionary.spaces[currentSpace];
+    });
+
+    const fetchData = useCallback(
+        async (nextSpace: string) => {
+            await dispatch(fetchDictionaryData(nextSpace));
+        },
+        [dispatch]
+    );
+
+    const updateDictionary = useCallback(
+        (dictionary: DictionaryItem[], nextSpace = currentSpace) => {
+            if (!nextSpace) {
+                return;
+            }
+
+            dispatch(setDictionary({ space: nextSpace, dictionary }));
+        },
+        [currentSpace, dispatch]
+    );
 
     return {
-        total,
-        setTotal,
-        dictionary,
-        setDictionary,
-        fetchData
+        total: spaceState?.total ?? 0,
+        setTotal: undefined,
+        dictionary: spaceState?.dictionary ?? [],
+        setDictionary: updateDictionary,
+        fetchData,
+        loading: spaceState?.loading ?? false,
+        error: spaceState?.error ?? null,
+        loaded: spaceState?.loaded ?? false,
     };
 };
