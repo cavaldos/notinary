@@ -15,9 +15,10 @@ interface CardProps {
     meaning: string;
     pronunciation: string;
     example?: string;
+    synonyms?: string[];
 }
 
-const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, meaning, pronunciation, example }) => {
+const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, meaning, pronunciation, example, synonyms = [] }) => {
     const showMeaning = true;
     const params = useParams();
     const { space } = params;
@@ -102,6 +103,22 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
                         </p>
                     )}
                 </div>
+
+                {/* Synonyms */}
+                {synonyms.length > 0 && (
+                    <div className="max-w-md mx-auto">
+                        <div className="flex flex-wrap items-center justify-center gap-2">
+                            {synonyms.map((synonym) => (
+                                <span
+                                    key={synonym}
+                                    className="inline-block bg-beige text-gray-800 px-3 py-1 rounded-md text-sm font-medium"
+                                >
+                                    {synonym}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Example sentence */}
                 {example && (

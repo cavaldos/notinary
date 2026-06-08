@@ -10,6 +10,7 @@ export interface DictionaryItem {
     Pronounce: string;
     Meaning: string;
     Example?: string;
+    Synonyms?: string[];
 }
 
 interface DictionarySpaceState {

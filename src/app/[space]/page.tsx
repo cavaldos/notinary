@@ -116,6 +116,7 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
                             pronunciation={item.Pronounce}
                             meaning={item.Meaning}
                             example={item.Example}
+                            synonyms={item.Synonyms}
                         />
                     </div>
                 ))}

@@ -1,6 +1,78 @@
 import { extractPropertyValue } from '@/lib/notion-base';
 import getClient from '@/lib/notion-base';
 
+type NotionRelationReference = {
+    id: string;
+};
+
+const getPlainTextFromPageProperty = (property: unknown): string => {
+    if (typeof property !== 'object' || property === null || !('type' in property)) {
+        return '';
+    }
+
+    const typedProperty = property as { type: string } & Record<string, unknown>;
+
+    if (typedProperty.type !== 'title') {
+        return '';
+    }
+
+    const propertyValue = typedProperty[typedProperty.type];
+
+    if (!Array.isArray(propertyValue)) {
+        return '';
+    }
+
+    return propertyValue
+        .map((item) => {
+            if (typeof item !== 'object' || item === null || !('plain_text' in item)) {
+                return '';
+            }
+
+            const richTextItem = item as { plain_text?: unknown };
+            return typeof richTextItem.plain_text === 'string' ? richTextItem.plain_text : '';
+        })
+        .join('');
+};
+
+const getPageTitle = async (pageId: string): Promise<string> => {
+    const client = getClient();
+    const page = await client.pages.retrieve({ page_id: pageId });
+
+    if (!('properties' in page)) {
+        return '';
+    }
+
+    for (const property of Object.values(page.properties)) {
+        const title = getPlainTextFromPageProperty(property);
+
+        if (title) {
+            return title;
+        }
+    }
+
+    return '';
+};
+
+const resolveRelationTitles = async (relations: unknown): Promise<string[]> => {
+    if (!Array.isArray(relations)) {
+        return [];
+    }
+
+    const relationIds = relations
+        .filter((relation): relation is NotionRelationReference => (
+            typeof relation === 'object'
+            && relation !== null
+            && 'id' in relation
+            && typeof (relation as { id?: unknown }).id === 'string'
+        ))
+        .map((relation) => relation.id);
+
+    const titles = await Promise.all(relationIds.map((relationId) => getPageTitle(relationId)));
+    return titles.filter((title) => title.length > 0);
+};
+
+const requiredColumns = ["Word", "Type", "Status", "Level", "Spaced Time", "Pronounce", "Meaning", "Repeat", "Genre", "Example", "Synonyms"];
+
 // Hàm để lấy thông tin database
 export const getDatabaseInfo = async (databaseId: string): Promise<any> => {
     try {
@@ -116,11 +188,8 @@ export const getFilteredDatabaseItems = async (databaseId: string): Promise<any>
             nextCursor = response.next_cursor || undefined;
         }
 
-        // Danh sách các cột cần lấy
-        const requiredColumns = ["Word", "Type", "Status", "Level", "Spaced Time", "Pronounce", "Meaning", "Repeat", "Genre", "Example"];
-
         // Xử lý và lọc dữ liệu
-        const filteredData = allResults.map((page: any) => {
+        const filteredData = await Promise.all(allResults.map(async (page: any) => {
             const item: Record<string, any> = {
                 id: page.id,
                 url: page.url,
@@ -129,16 +198,18 @@ export const getFilteredDatabaseItems = async (databaseId: string): Promise<any>
             };
 
             // Lọc các thuộc tính (properties) cần thiết
-            Object.keys(page.properties).forEach(propertyName => {
+            for (const propertyName of Object.keys(page.properties)) {
                 if (requiredColumns.includes(propertyName)) {
                     const property = page.properties[propertyName];
                     // Xử lý dữ liệu tùy theo loại thuộc tính
-                    item[propertyName] = extractPropertyValue(property);
+                    item[propertyName] = propertyName === "Synonyms"
+                        ? await resolveRelationTitles(extractPropertyValue(property))
+                        : extractPropertyValue(property);
                 }
-            });
+            }
 
             return item;
-        });
+        }));
 
         return {
             success: true,
@@ -180,12 +251,8 @@ export const getInProgressItems = async (databaseId: string, pageSize: number = 
             }
         });
 
-        // Danh sách các cột cần lấy
-        const requiredColumns = ["Word", "Type", "Status", "Level", "Spaced Time", "Pronounce", "Meaning", "Repeat", "Genre", "Example"];
-
-
         // Xử lý và lọc dữ liệu
-        const filteredData = response.results.map((page: any) => {
+        const filteredData = await Promise.all(response.results.map(async (page: any) => {
             const item: Record<string, any> = {
                 id: page.id,
                 url: page.url,
@@ -194,16 +261,18 @@ export const getInProgressItems = async (databaseId: string, pageSize: number = 
             };
 
             // Lọc các thuộc tính (properties) cần thiết
-            Object.keys(page.properties).forEach(propertyName => {
+            for (const propertyName of Object.keys(page.properties)) {
                 if (requiredColumns.includes(propertyName)) {
                     const property = page.properties[propertyName];
                     // Xử lý dữ liệu tùy theo loại thuộc tính
-                    item[propertyName] = extractPropertyValue(property);
+                    item[propertyName] = propertyName === "Synonyms"
+                        ? await resolveRelationTitles(extractPropertyValue(property))
+                        : extractPropertyValue(property);
                 }
-            });
+            }
 
             return item;
-        });
+        }));
 
         return {
             success: true,
@@ -277,12 +346,8 @@ export const getSpacedTimeItems = async (
             nextCursor = response.next_cursor || undefined;
         }
 
-        // Danh sách các cột cần lấy
-        const requiredColumns = ["Word", "Type", "Status", "Level", "Spaced Time", "Pronounce", "Meaning", "Repeat", "Genre", "Example"];
-
-
         // Xử lý và lọc dữ liệu
-        const filteredData = allResults.map((page: any) => {
+        const filteredData = await Promise.all(allResults.map(async (page: any) => {
             const item: Record<string, any> = {
                 id: page.id,
                 url: page.url,
@@ -291,16 +356,18 @@ export const getSpacedTimeItems = async (
             };
 
             // Lọc các thuộc tính (properties) cần thiết
-            Object.keys(page.properties).forEach(propertyName => {
+            for (const propertyName of Object.keys(page.properties)) {
                 if (requiredColumns.includes(propertyName)) {
                     const property = page.properties[propertyName];
                     // Xử lý dữ liệu tùy theo loại thuộc tính
-                    item[propertyName] = extractPropertyValue(property);
+                    item[propertyName] = propertyName === "Synonyms"
+                        ? await resolveRelationTitles(extractPropertyValue(property))
+                        : extractPropertyValue(property);
                 }
-            });
+            }
 
             return item;
-        });
+        }));
 
         return {
             success: true,
