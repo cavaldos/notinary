@@ -51,13 +51,9 @@ const GamesPage: React.FC = () => {
 
     const { speak } = useTextToSpeech();
 
-    // Hàm phát âm từ hiện tại
-    const speakCurrentWord = useCallback(() => {
-        if (dictionary.length > 0 && dictionary[currentIndex]) {
-            const word = dictionary[currentIndex].Word;
-            speak(word, { language: process.env.NEXT_PUBLIC_SPEECH_LANGUAGE || 'en', rate: 0.8, pitch: 1 });
-        }
-    }, [dictionary, currentIndex, speak]);
+    // Ref để theo dõi index hiện tại trong vòng lặp async (tránh stale closure)
+    const playIndexRef = useRef(0);
+    playIndexRef.current = currentIndex;
 
     // Chuyển sang từ tiếp theo
     const goToNextWord = useCallback(() => {
@@ -68,21 +64,48 @@ const GamesPage: React.FC = () => {
         }
     }, [currentIndex, dictionary.length, scrollToCard]);
 
-    // Auto-play: phát âm và chuyển từ theo tốc độ đã chọn
+    // Auto-play: phát âm → chờ phát âm xong → chờ delay → chuyển từ
     useEffect(() => {
         if (!isAutoPlay || dictionary.length === 0) return;
 
-        // Phát âm từ hiện tại ngay khi bắt đầu
-        speakCurrentWord();
+        let cancelled = false;
+        let timeoutId: number;
 
-        const intervalId = setInterval(() => {
-            goToNextWord();
-        }, autoPlaySpeed * 1000);
+        const playWord = async () => {
+            if (cancelled) return;
+
+            // 1. Phát âm từ hiện tại và ĐỢI nó kết thúc
+            const word = dictionary[playIndexRef.current]?.Word;
+            if (word) {
+                await speak(word, { language: process.env.NEXT_PUBLIC_SPEECH_LANGUAGE || 'en', rate: 0.8, pitch: 1 });
+            }
+
+            if (cancelled) return;
+
+            // 2. Chờ khoảng delay đã cài (từ sau khi phát âm xong)
+            timeoutId = window.setTimeout(() => {
+                if (cancelled) return;
+
+                // 3. Chuyển sang từ tiếp theo
+                const dictLen = dictionary.length;
+                const nextIndex = (playIndexRef.current + 1) < dictLen ? playIndexRef.current + 1 : 0;
+                playIndexRef.current = nextIndex;
+                setCurrentIndex(nextIndex);
+                scrollToCard(nextIndex);
+
+                // 4. Lặp lại
+                playWord();
+            }, autoPlaySpeed * 1000);
+        };
+
+        playWord();
 
         return () => {
-            clearInterval(intervalId);
+            cancelled = true;
+            clearTimeout(timeoutId);
+            window.speechSynthesis?.cancel();
         };
-    }, [isAutoPlay, dictionary.length, goToNextWord, speakCurrentWord, autoPlaySpeed]);
+    }, [isAutoPlay, dictionary.length, autoPlaySpeed, speak, scrollToCard]);
 
     const step = 30;
 

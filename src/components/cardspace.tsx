@@ -108,9 +108,9 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
                 {synonyms.length > 0 && (
                     <div className="max-w-md mx-auto">
                         <div className="flex flex-wrap items-center justify-center gap-2">
-                            {synonyms.map((synonym) => (
+                            {synonyms.map((synonym, i) => (
                                 <span
-                                    key={synonym}
+                                    key={`${synonym}-${i}`}
                                     className="inline-block bg-beige text-gray-800 px-3 py-1 rounded-md text-sm font-medium"
                                 >
                                     {synonym}
