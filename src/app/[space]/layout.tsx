@@ -50,9 +50,7 @@ const SpaceLayout = ({ children }: { children: React.ReactNode }) => {
             }, 5000);
         }
     }, [isExpanded]);
-    useEffect(() => {
-        fetchData(space);
-    }, [fetchData, space]);
+    // Data is fetched by [space]/page.tsx — no duplicate fetch needed here
     // Effect để xử lý click outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

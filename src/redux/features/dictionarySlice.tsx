@@ -19,6 +19,8 @@ interface DictionarySpaceState {
     loading: boolean;
     error: string | null;
     loaded: boolean;
+    /** Timestamp of last successful fetch (from API or cache fallback) */
+    lastFetched: number | null;
 }
 
 interface DictionaryState {
@@ -32,6 +34,7 @@ const createEmptySpaceState = (): DictionarySpaceState => ({
     loading: false,
     error: null,
     loaded: false,
+    lastFetched: null,
 });
 
 const initialState: DictionaryState = {
@@ -60,20 +63,22 @@ const hasDataProperty = (value: unknown): value is { data: unknown } => {
     return typeof value === 'object' && value !== null && 'data' in value;
 };
 
+/**
+ * Cache-first, stale-while-revalidate thunk.
+ *
+ * 1. Always attempts to fetch fresh data from the API.
+ * 2. If the fetch fails (rate limit, network error) AND cached data exists,
+ *    returns the cached data as a graceful fallback — never shows error to user
+ *    if we have something to show.
+ * 3. The reducer skips loading state when cached data exists, so the user
+ *    sees the old data immediately while new data loads in the background.
+ */
 export const fetchDictionaryData = createAsyncThunk(
     'dictionary/fetchData',
     async (space: string, { getState, rejectWithValue }) => {
         const state = getState() as RootState;
         const cachedSpace = state.dictionary.spaces[space];
-
-        if (cachedSpace?.loaded) {
-            return {
-                space,
-                total: cachedSpace.total,
-                dictionary: cachedSpace.dictionary,
-                fromCache: true,
-            };
-        }
+        const hasCached = cachedSpace?.loaded === true;
 
         try {
             const response = await NotionService.getSpacedTimeItems(200, space);
@@ -87,6 +92,7 @@ export const fetchDictionaryData = createAsyncThunk(
                     total: responseData.length,
                     dictionary: filteredData,
                     fromCache: false,
+                    lastFetched: Date.now(),
                 };
             }
 
@@ -95,9 +101,24 @@ export const fetchDictionaryData = createAsyncThunk(
                 total: 0,
                 dictionary: [],
                 fromCache: false,
+                lastFetched: Date.now(),
             };
         } catch (error: unknown) {
-            console.error('Error fetching vocabulary:', error);
+            // Rate limited or network error — fall back to cache if available
+            if (hasCached && cachedSpace) {
+                console.warn(
+                    `[dictionarySlice] API error for "${space}", using cached data:`,
+                    getErrorMessage(error)
+                );
+                return {
+                    space,
+                    total: cachedSpace.total,
+                    dictionary: cachedSpace.dictionary,
+                    fromCache: true,
+                    lastFetched: cachedSpace.lastFetched ?? Date.now(),
+                };
+            }
+
             return rejectWithValue({ space, message: getErrorMessage(error) });
         }
     }
@@ -131,6 +152,7 @@ const dictionarySlice = createSlice({
                 loading: false,
                 error: null,
                 loaded: true,
+                lastFetched: Date.now(),
             };
         },
     },
@@ -140,11 +162,16 @@ const dictionarySlice = createSlice({
                 const space = action.meta.arg;
                 state.currentSpace = space;
                 state.spaces[space] ??= createEmptySpaceState();
-                state.spaces[space].loading = true;
                 state.spaces[space].error = null;
+
+                // Cache-first: don't show loading if we already have data,
+                // let the user see stale data while fresh data loads.
+                if (!state.spaces[space].loaded) {
+                    state.spaces[space].loading = true;
+                }
             })
             .addCase(fetchDictionaryData.fulfilled, (state, action) => {
-                const { space, total, dictionary } = action.payload;
+                const { space, total, dictionary, lastFetched } = action.payload;
                 state.currentSpace = space;
                 state.spaces[space] = {
                     total,
@@ -152,16 +179,25 @@ const dictionarySlice = createSlice({
                     loading: false,
                     error: null,
                     loaded: true,
+                    lastFetched,
                 };
             })
             .addCase(fetchDictionaryData.rejected, (state, action) => {
                 const payload = action.payload as { space: string; message: string } | undefined;
                 const space = payload?.space ?? action.meta.arg;
-                state.currentSpace = space;
-                state.spaces[space] = {
-                    ...createEmptySpaceState(),
-                    error: payload?.message ?? 'Failed to fetch vocabulary',
-                };
+
+                // If we have cached data, keep it and suppress the error UI.
+                // User never sees an error for data they already have.
+                if (state.spaces[space]?.loaded) {
+                    state.spaces[space].loading = false;
+                    state.spaces[space].error = null;
+                } else {
+                    // No fallback available — show the error
+                    state.spaces[space] = {
+                        ...createEmptySpaceState(),
+                        error: payload?.message ?? 'Failed to fetch vocabulary',
+                    };
+                }
             });
     },
 });

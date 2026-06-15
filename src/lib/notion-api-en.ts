@@ -71,7 +71,7 @@ const resolveRelationTitles = async (relations: unknown): Promise<string[]> => {
     return titles.filter((title) => title.length > 0);
 };
 
-const requiredColumns = ["Word", "Type", "Status", "Level", "Spaced Time", "Pronounce", "Meaning", "Repeat", "Genre", "Example", "Synonyms"];
+const requiredColumns = ["Word", "Type", "Status", "Level", "Spaced Time", "Pronounce", "Meaning", "Genre", "Example", "Synonyms"];
 
 // Hàm để lấy thông tin database
 export const getDatabaseInfo = async (databaseId: string): Promise<any> => {

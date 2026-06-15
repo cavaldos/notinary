@@ -25,8 +25,8 @@ const persistConfig = {
     key: 'root',
     version: 1,
     storage,
-    whitelist: ['count', 'setting'],
-};
+    whitelist: ['count', 'setting', 'dictionary'],
+    };
 const rootReducer = combineReducers({
     count: countSlice,
     setting: settingSlice,

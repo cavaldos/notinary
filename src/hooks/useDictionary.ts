@@ -42,5 +42,6 @@ export const useDictionary = (space?: string) => {
         loading: spaceState?.loading ?? false,
         error: spaceState?.error ?? null,
         loaded: spaceState?.loaded ?? false,
+        lastFetched: spaceState?.lastFetched ?? null,
     };
 };
