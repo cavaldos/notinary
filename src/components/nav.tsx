@@ -1,47 +1,63 @@
-
 'use client'
 
-import React from 'react';
-import { Grid3X3, Gamepad2, Settings } from 'lucide-react';
-import { useRouter } from 'next/navigation'
+import React from 'react'
+import { ChevronLeft, Grid3X3, ChevronRight} from 'lucide-react'
+import { useRouter, usePathname } from 'next/navigation'
+
 const Navbar: React.FC = () => {
-    const navigate = useRouter().push;
+    const router = useRouter()
+    const pathname = usePathname()
+
+    const levels = ['/L1', '/L2', '/L3', '/L4']
+    const currentLevelIndex = levels.indexOf(pathname)
+
+    const goPrev = () => {
+        if (currentLevelIndex !== -1) {
+            const prevIndex = (currentLevelIndex - 1 + levels.length) % levels.length
+            router.push(levels[prevIndex])
+        } else {
+            router.back()
+        }
+    }
+
+    const goNext = () => {
+        if (currentLevelIndex !== -1) {
+            const nextIndex = (currentLevelIndex + 1) % levels.length
+            router.push(levels[nextIndex])
+        } else {
+            router.push('/L1')
+        }
+    }
+
+    if (pathname === '/') return null
+
     return (
         <>
-            <div className="fixed bottom-0 left-0 right-0 z-50 ">
-                <div className="flex justify-center items-center py-4 px-6">
-                    <div className="flex items-center space-x-[50px] text-xl ">
-                        {/* Menu Button */}
-                        <button
-                            onClick={() => navigate('/')}
-                            className={`flex items-center justify-center w-12 h-12 rounded-full
-                                 transition-all duration-200 bg-beige text-black custom_sd2`}
-                        >
-                            <Grid3X3 size={20} />
-                        </button>
-
-                        {/* Games Button */}
-                        <button
-                            onClick={() => navigate('/games')}
-                            className={`flex items-center justify-center px-6 py-3 rounded-full
-                                 transition-all duration-200 bg-beige text-black custom_sd2 `}
-                        >
-                            <Gamepad2 size={18} className="mr-2" />
-                            <span className="">auto</span>
-                        </button>
-
-                        {/* Setting Button */}
-                        <button
-                            onClick={() => navigate('/setting')}
-                            className={`flex items-center justify-center w-12 h-12 rounded-full
-                                 transition-all duration-200 bg-beige text-black custom_sd2`}
-                        >
-                            <Settings size={20} />
-                        </button>
-
-                    </div>
+            <div className="fixed bottom-2 left-0 right-0 z-50 flex justify-center pb-1">
+                <div className="bg-beige text-grey-dark rounded-full px-3 py-1 flex items-center gap-4 shadow-lg transition-all duration-300">
+                    <button
+                        onClick={goPrev}
+                        className="p-1 hover:scale-105 active:scale-95 transition-all duration-200"
+                    >
+                        <ChevronLeft size={18} />
+                    </button>
+                    <button
+                        onClick={() => router.push('/')}
+                        className="p-1 hover:scale-105 active:scale-95 transition-all duration-200"
+                    >
+                        <Grid3X3 size={18} />
+                    </button>
+                    <button
+                        onClick={goNext}
+                        className="p-1 hover:scale-105 active:scale-95 transition-all duration-200"
+                    >
+                        <ChevronRight size={18} />
+                    </button>
                 </div>
-            </div></>
-    );
+            </div>
+
+        </>
+    )
 }
-export default Navbar;
+
+export default Navbar

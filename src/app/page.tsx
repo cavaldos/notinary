@@ -2,7 +2,7 @@
 'use client';
 import React from 'react';
 import { useRouter } from 'next/navigation';
-
+import { Settings } from 'lucide-react';
 const Home: React.FC = () => {
   const router = useRouter();
   const navigate = (path: string) => {
@@ -19,7 +19,7 @@ const Home: React.FC = () => {
   ];
 
 
-  
+
   return (
     <div className="h-[80%] flex flex-col items-center justify-center   p-6">
       <div className="grid grid-cols-2 gap-4 w-full max-w-md">
@@ -32,6 +32,19 @@ const Home: React.FC = () => {
             {item.label}
           </div>
         ))}
+
+        <div className="fixed bottom-2 left-0 right-0 z-50 flex justify-center pb-1">
+          <div className="bg-beige text-grey-dark rounded-full px-3 py-1 flex items-center gap-4 shadow-lg transition-all duration-300">
+            <button
+              onClick={() => router.push('/setting')}
+              className="p-1 hover:scale-105 active:scale-95 transition-all duration-200"
+            >
+
+              <Settings size={18} />
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   );
