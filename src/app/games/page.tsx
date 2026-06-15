@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { BookOpen, Clock, Play, Pause, ArrowDown } from 'lucide-react';
+import { BookOpen, Clock, Play, Pause } from 'lucide-react';
 
 import { useDictionary } from '@/hooks/useDictionary';
 import Card from '@/components/cardspace';
@@ -107,15 +107,6 @@ const GamesPage: React.FC = () => {
         };
     }, [isAutoPlay, dictionary.length, autoPlaySpeed, speak, scrollToCard]);
 
-    const step = 30;
-
-    // Scroll down by 30 items
-    const scrollDown = useCallback(() => {
-        const newIndex = Math.min(currentIndex + step, dictionary.length - 1);
-        setCurrentIndex(newIndex);
-        scrollToCard(newIndex);
-    }, [currentIndex, dictionary.length, scrollToCard]);
-
     // Handle scroll event with snap effect
     useEffect(() => {
         const container = containerRef.current;
@@ -186,14 +177,7 @@ const GamesPage: React.FC = () => {
                 <Clock className="w-5 h-5" /> {autoPlaySpeed}s
             </button>
 
-            {/* Scroll Down Button */}
-            <button
-                onClick={scrollDown}
-                className="fixed bottom-[80px] right-5 z-50 bg-beige text-gray-800 font-bold py-3 px-4 rounded-xl shadow-lg transition-colors duration-200 flex items-center gap-2"
-                disabled={currentIndex >= dictionary.length - 10}
-            >
-                <ArrowDown className="w-5 h-5" /> {step}
-            </button>
+
 
             <div
                 ref={containerRef}

@@ -106,7 +106,7 @@ const SpaceLayout = ({ children }: { children: React.ReactNode }) => {
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
                 className={`fixed top-0 left-0 right-0 z-50 bg-beige text-grey-dark mx-auto transition-all duration-300 ease-in-out
-                      mt-[30px] py-[5px] px-[10px] p-2 rounded-full text-center text-shadow-grey-dark font-bold
+                      mt-[15px] py-[5px] px-[10px] p-2 rounded-full text-center text-shadow-grey-dark font-bold
                       ${isExpanded ? 'max-w-[80%]' : 'max-w-[60%]'}`}>
 
                 {!isExpanded ? (
