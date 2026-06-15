@@ -138,8 +138,34 @@ body {
   border-color: #4a4a4a;
 }
 
+[data-theme="dark"] .border-gray-300 {
+  border-color: #5a5a5a;
+}
+
+[data-theme="dark"] .bg-beige {
+  background-color: #4a4a4a;
+}
+
 /* Keep tag text dark on colored backgrounds in dark mode */
 [data-theme="dark"] .bg-\[\#dcebdd\],
 [data-theme="dark"] .bg-\[\#fbded9\] {
   color: #1f2937;
+}
+
+[data-theme="dark"] .bg-green-50 {
+  background-color: rgba(34, 197, 94, 0.15);
+}
+
+[data-theme="dark"] .text-green-800,
+[data-theme="dark"] .text-green-600 {
+  color: #86efac;
+}
+
+[data-theme="dark"] .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.15);
+}
+
+[data-theme="dark"] .text-red-800,
+[data-theme="dark"] .text-red-600 {
+  color: #fca5a5;
 }

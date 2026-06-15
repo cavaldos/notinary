@@ -1,72 +1,35 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { BookOpen, Clock, Play, Pause } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 
 import { useDictionary } from '@/hooks/useDictionary';
 import Card from '@/components/cardspace';
 import useTextToSpeech from '@/hooks/useTextToSpeech';
+import { AutoPlayProvider, useAutoPlay } from '@/contexts/auto-play-context';
+import AutoPlayPanel from '@/components/auto-play-panel';
 
-
-const GamesPage: React.FC = () => {
-    const { fetchData, dictionary } = useDictionary();
-    const [space, setSpace] = useState('L2'); // Space có thể thay đổi
-    const spaceOptions = ['L1', 'L2', 'L3', 'L4']; // Các tùy chọn space
-
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isAutoPlay, setIsAutoPlay] = useState(false);
-    const [autoPlaySpeed, setAutoPlaySpeed] = useState(2); // Tốc độ mặc định 2 giây
-    const speedOptions = [0.5,1, 2, 3, 4, 5, 8]; // Các tùy chọn tốc độ
-    const containerRef = useRef<HTMLDivElement>(null);
-    const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-    // Chuyển đổi space
-    const cycleSpace = () => {
-        const currentSpaceIndex = spaceOptions.indexOf(space);
-        const nextIndex = (currentSpaceIndex + 1) % spaceOptions.length;
-        setSpace(spaceOptions[nextIndex]);
-        setCurrentIndex(0); // Reset về từ đầu tiên khi đổi space
-    };
-
-    // Chuyển đổi tốc độ
-    const cycleSpeed = () => {
-        const currentSpeedIndex = speedOptions.indexOf(autoPlaySpeed);
-        const nextIndex = (currentSpeedIndex + 1) % speedOptions.length;
-        setAutoPlaySpeed(speedOptions[nextIndex]);
-    };
-
-    useEffect(() => {
-        fetchData(space);
-    }, [fetchData, space]);
-
-    // Scroll to specific card with smooth animation
-    const scrollToCard = useCallback((index: number) => {
-        if (cardRefs.current[index]) {
-            cardRefs.current[index]?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
-            });
-        }
-    }, []);
-
+// ── Inner component: auto-play effect & touch-hold (must be inside AutoPlayProvider) ──
+function AutoPlayController({
+    dictionary,
+    currentIndex,
+    setCurrentIndex,
+    scrollToCard,
+    playIndexRef,
+}: {
+    dictionary: { Word: string }[];
+    currentIndex: number;
+    setCurrentIndex: React.Dispatch<React.SetStateAction<number>>;
+    scrollToCard: (index: number) => void;
+    playIndexRef: React.MutableRefObject<number>;
+}) {
+    const { isPlaying, interval, togglePlay } = useAutoPlay();
     const { speak } = useTextToSpeech();
+    const wasPlayingRef = useRef(false);
 
-    // Ref để theo dõi index hiện tại trong vòng lặp async (tránh stale closure)
-    const playIndexRef = useRef(0);
-    playIndexRef.current = currentIndex;
-
-    // Chuyển sang từ tiếp theo
-    const goToNextWord = useCallback(() => {
-        if (dictionary.length > 0) {
-            const nextIndex = currentIndex + 1 < dictionary.length ? currentIndex + 1 : 0;
-            setCurrentIndex(nextIndex);
-            scrollToCard(nextIndex);
-        }
-    }, [currentIndex, dictionary.length, scrollToCard]);
-
-    // Auto-play: phát âm → chờ phát âm xong → chờ delay → chuyển từ
+    // ── Auto-play: phát âm → chờ delay → chuyển từ ──
     useEffect(() => {
-        if (!isAutoPlay || dictionary.length === 0) return;
+        if (!isPlaying || dictionary.length === 0) return;
 
         let cancelled = false;
         let timeoutId: number;
@@ -74,28 +37,29 @@ const GamesPage: React.FC = () => {
         const playWord = async () => {
             if (cancelled) return;
 
-            // 1. Phát âm từ hiện tại và ĐỢI nó kết thúc
             const word = dictionary[playIndexRef.current]?.Word;
             if (word) {
-                await speak(word, { language: process.env.NEXT_PUBLIC_SPEECH_LANGUAGE || 'en', rate: 0.8, pitch: 1 });
+                await speak(word, {
+                    language: process.env.NEXT_PUBLIC_SPEECH_LANGUAGE || 'en',
+                    rate: 0.8,
+                    pitch: 1,
+                });
             }
 
             if (cancelled) return;
 
-            // 2. Chờ khoảng delay đã cài (từ sau khi phát âm xong)
             timeoutId = window.setTimeout(() => {
                 if (cancelled) return;
 
-                // 3. Chuyển sang từ tiếp theo
                 const dictLen = dictionary.length;
-                const nextIndex = (playIndexRef.current + 1) < dictLen ? playIndexRef.current + 1 : 0;
+                const nextIndex =
+                    playIndexRef.current + 1 < dictLen ? playIndexRef.current + 1 : 0;
                 playIndexRef.current = nextIndex;
                 setCurrentIndex(nextIndex);
                 scrollToCard(nextIndex);
 
-                // 4. Lặp lại
                 playWord();
-            }, autoPlaySpeed * 1000);
+            }, interval * 1000);
         };
 
         playWord();
@@ -105,7 +69,75 @@ const GamesPage: React.FC = () => {
             clearTimeout(timeoutId);
             window.speechSynthesis?.cancel();
         };
-    }, [isAutoPlay, dictionary.length, autoPlaySpeed, speak, scrollToCard]);
+    }, [isPlaying, dictionary.length, interval, speak, scrollToCard, playIndexRef, setCurrentIndex]);
+
+    // ── Touch-hold: giữ → pause, thả → resume ──
+    const handleTouchStart = useCallback(() => {
+        wasPlayingRef.current = isPlaying;
+        if (isPlaying) {
+            togglePlay();
+        }
+    }, [isPlaying, togglePlay]);
+
+    const handleTouchEnd = useCallback(() => {
+        if (wasPlayingRef.current) {
+            togglePlay();
+        }
+        wasPlayingRef.current = false;
+    }, [togglePlay]);
+
+    const handleTouchCancel = useCallback(() => {
+        if (wasPlayingRef.current) {
+            togglePlay();
+        }
+        wasPlayingRef.current = false;
+    }, [togglePlay]);
+
+    return (
+        <div
+            className="contents"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchCancel}
+        >
+            {null}
+        </div>
+    );
+}
+
+// ── Main page ──
+const GamesPage: React.FC = () => {
+    const { fetchData, dictionary } = useDictionary();
+    const [space, setSpace] = useState('L2');
+    const spaceOptions = ['L1', 'L2', 'L3', 'L4'];
+
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const playIndexRef = useRef(0);
+    playIndexRef.current = currentIndex;
+
+    // Space toggle
+    const cycleSpace = () => {
+        const currentSpaceIndex = spaceOptions.indexOf(space);
+        const nextIndex = (currentSpaceIndex + 1) % spaceOptions.length;
+        setSpace(spaceOptions[nextIndex]);
+        setCurrentIndex(0);
+    };
+
+    useEffect(() => {
+        fetchData(space);
+    }, [fetchData, space]);
+
+    // Scroll to specific card
+    const scrollToCard = useCallback((index: number) => {
+        if (cardRefs.current[index]) {
+            cardRefs.current[index]?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
+        }
+    }, []);
 
     // Handle scroll event with snap effect
     useEffect(() => {
@@ -152,60 +184,59 @@ const GamesPage: React.FC = () => {
     }, [currentIndex, scrollToCard]);
 
     return (
-        <div className="flex flex-col h-screen mb-[20px] w-full max-w-full">
-            {/* Space toggle button */}
-            <button
-                onClick={cycleSpace}
-                className="fixed top-5 left-5 z-50 bg-beige text-gray-800 font-bold py-3 px-4 rounded-xl shadow-lg transition-colors duration-200 flex items-center gap-2"
-            >
-                <BookOpen className="w-5 h-5" /> {space} ({dictionary.length})
-            </button>
+        <AutoPlayProvider>
+            <div className="flex flex-col h-screen mb-[20px] w-full max-w-full">
+                {/* Space toggle button */}
+                <button
+                    onClick={cycleSpace}
+                    className="fixed top-5 left-5 z-50 bg-beige text-gray-800 font-bold py-3 px-4 rounded-xl shadow-lg transition-colors duration-200 flex items-center gap-2"
+                >
+                    <BookOpen className="w-5 h-5" /> {space} ({dictionary.length})
+                </button>
 
-            {/* Auto-play toggle button */}
-            <button
-                onClick={() => setIsAutoPlay(!isAutoPlay)}
-                className="fixed top-5 right-5 z-50 bg-beige text-gray-800 font-bold py-3 px-4 rounded-xl shadow-lg transition-colors duration-200 flex items-center gap-2"
-            >
-                {isAutoPlay ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-            </button>
+                {/* Auto-play controller + touch-hold (inside provider) */}
+                <AutoPlayController
+                    dictionary={dictionary}
+                    currentIndex={currentIndex}
+                    setCurrentIndex={setCurrentIndex}
+                    scrollToCard={scrollToCard}
+                    playIndexRef={playIndexRef}
+                />
 
-            {/* Speed toggle button */}
-            <button
-                onClick={cycleSpeed}
-                className="fixed top-5 right-32 z-50 bg-beige text-gray-800 font-bold py-3 px-4 rounded-xl shadow-lg transition-colors duration-200 flex items-center gap-2"
-            >
-                <Clock className="w-5 h-5" /> {autoPlaySpeed}s
-            </button>
+                {/* Cards */}
+                <div
+                    ref={containerRef}
+                    className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth px-8 py-12"
+                    style={{ scrollSnapType: 'y mandatory' }}
+                >
+                    {dictionary.map((item, index) => (
+                        <div
+                            key={index}
+                            ref={(el) => {
+                                cardRefs.current[index] = el;
+                            }}
+                            className="min-h-screen w-full flex items-center justify-center"
+                            style={{ scrollSnapAlign: 'center' }}
+                        >
+                            <Card
+                                index={index}
+                                idPage={item.id}
+                                word={item.Word}
+                                level={item.Level}
+                                type={item.Type}
+                                pronunciation={item.Pronounce}
+                                meaning={item.Meaning}
+                                example={item.Example}
+                                synonyms={item.Synonyms}
+                            />
+                        </div>
+                    ))}
+                </div>
 
-
-
-            <div
-                ref={containerRef}
-                className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth px-8 py-12"
-                style={{ scrollSnapType: 'y mandatory' }}
-            >
-                {dictionary.map((item, index) => (
-                    <div
-                        key={index}
-                        ref={(el) => { cardRefs.current[index] = el; }}
-                        className="min-h-screen w-full flex items-center justify-center"
-                        style={{ scrollSnapAlign: 'center' }}
-                    >
-                        <Card
-                            index={index}
-                            idPage={item.id}
-                            word={item.Word}
-                            level={item.Level}
-                            type={item.Type}
-                            pronunciation={item.Pronounce}
-                            meaning={item.Meaning}
-                            example={item.Example}
-                            synonyms={item.Synonyms}
-                        />
-                    </div>
-                ))}
+                {/* Floating Auto-Play Panel */}
+                <AutoPlayPanel />
             </div>
-        </div>
+        </AutoPlayProvider>
     );
 };
 
