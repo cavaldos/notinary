@@ -136,11 +136,11 @@ const SpaceLayout = ({ children }: { children: React.ReactNode }) => {
             </div>
 
             {/* Main Content */}
-            <div
+            {/* <div
                 className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth px-8 py-12 "
-            >
-                {children}
-            </div>
+            > */}
+            {children}
+            {/* </div> */}
         </div>
     );
 };
