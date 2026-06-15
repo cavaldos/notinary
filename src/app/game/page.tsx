@@ -3,12 +3,23 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useDictionary } from '@/hooks/useDictionary';
 import type { DictionaryItem } from '@/redux/features/dictionarySlice';
-import { Volume2, RotateCcw } from 'lucide-react';
-import useTextToSpeech from '@/hooks/useTextToSpeech';
+import { RotateCcw } from 'lucide-react';
 
 type Question = {
     correctWord: DictionaryItem;
     options: DictionaryItem[];
+};
+
+const hideWordInExample = (example: string, word: string): React.ReactNode => {
+    if (!word) return example;
+    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escaped})`, 'gi');
+    const parts = example.split(regex);
+    return parts.map((part, i) =>
+        part.toLowerCase() === word.toLowerCase()
+            ? <span key={i} className="font-bold text-gray-400">______</span>
+            : part
+    );
 };
 
 const normalizeType = (type: string): string => {
@@ -28,7 +39,6 @@ const typeDisplayLabels: Record<string, string> = {
 
 const GameSelectPage: React.FC = () => {
     const { fetchData, dictionary, loading } = useDictionary();
-    const { speak } = useTextToSpeech();
 
     const [space, setSpace] = useState('L2');
     const [typeFilter, setTypeFilter] = useState('all');
@@ -39,6 +49,8 @@ const GameSelectPage: React.FC = () => {
     const [score, setScore] = useState(0);
     const [showResult, setShowResult] = useState(false);
     const [gameFinished, setGameFinished] = useState(false);
+    const [wrongWords, setWrongWords] = useState<DictionaryItem[]>([]);
+    const [questionCount, setQuestionCount] = useState(20);
 
     const spaceOptions = ['L1', 'L2', 'L3', 'L4'];
     const typeOptions = ['all', 'verb', 'noun', 'adj', 'adv', 'phrase'];
@@ -75,7 +87,7 @@ const GameSelectPage: React.FC = () => {
         if (filteredItems.length < 4) return;
 
         const shuffled = shuffleArray(filteredItems);
-        const totalQuestions = Math.min(shuffled.length, 20);
+        const totalQuestions = Math.min(shuffled.length, questionCount);
         const selectedWords = shuffled.slice(0, totalQuestions);
 
         const generatedQuestions: Question[] = selectedWords.map((correctWord) => {
@@ -101,11 +113,12 @@ const GameSelectPage: React.FC = () => {
         setQuestions(generatedQuestions);
         setCurrentQ(0);
         setScore(0);
+        setWrongWords([]);
         setSelectedAnswer(null);
         setShowResult(false);
         setGameFinished(false);
         setGameStarted(true);
-    }, [filteredItems, dictionary, itemsByType]);
+    }, [filteredItems, dictionary, itemsByType, questionCount]);
 
     const handleSelectAnswer = (word: string) => {
         if (showResult) return;
@@ -113,6 +126,8 @@ const GameSelectPage: React.FC = () => {
         setShowResult(true);
         if (word === questions[currentQ].correctWord.Word) {
             setScore(prev => prev + 1);
+        } else {
+            setWrongWords(prev => [...prev, questions[currentQ].correctWord]);
         }
     };
 
@@ -126,8 +141,13 @@ const GameSelectPage: React.FC = () => {
         }
     };
 
-    const speakWord = (word: string) => {
-        speak(word, { language: 'en' });
+    const replayGame = () => {
+        setCurrentQ(0);
+        setScore(0);
+        setWrongWords([]);
+        setSelectedAnswer(null);
+        setShowResult(false);
+        setGameFinished(false);
     };
 
     const resetGame = () => {
@@ -138,6 +158,7 @@ const GameSelectPage: React.FC = () => {
         setSelectedAnswer(null);
         setShowResult(false);
         setScore(0);
+        setWrongWords([]);
     };
 
     if (!gameStarted) {
@@ -178,6 +199,24 @@ const GameSelectPage: React.FC = () => {
                     </p>
                 </div>
 
+                <div className="mb-8 w-full max-w-xs">
+                    <label className="block text-gray-600 dark:text-gray-400 mb-2 text-sm font-medium">
+                        Questions: <span className="font-bold text-gray-600 dark:text-gray-400">{questionCount}</span>
+                    </label>
+                    <input
+                        type="range"
+                        min={5}
+                        max={Math.max(5, filteredItems.length)}
+                        value={Math.min(questionCount, Math.max(5, filteredItems.length))}
+                        onChange={e => setQuestionCount(Number(e.target.value))}
+                        className="w-full h-2 bg-beige dark:bg-gray-400 rounded-full appearance-none cursor-pointer accent-gray-900 dark:accent-gray-100"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        <span>5</span>
+                        <span>{filteredItems.length}</span>
+                    </div>
+                </div>
+
                 <button
                     onClick={generateQuestions}
                     disabled={filteredItems.length < 4 || loading}
@@ -191,8 +230,8 @@ const GameSelectPage: React.FC = () => {
 
     if (gameFinished) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen p-6">
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">Game Over</h1>
+            <div className="flex flex-col items-center min-h-screen p-6">
+                <h1 className="text-3xl font-bold text-gray-900 mb-4 mt-8">Game Over</h1>
                 <div className="text-7xl font-bold text-gray-900 mb-2">
                     {score} / {questions.length}
                 </div>
@@ -201,13 +240,14 @@ const GameSelectPage: React.FC = () => {
                         ? 'Perfect!'
                         : score >= questions.length * 0.7
                             ? 'Great job!'
-                            : score >= questions.length * 0.4
+                            : score >= questions.length * 0.5
                                 ? 'Good effort!'
                                 : 'Keep practicing!'}
                 </p>
-                <div className="flex gap-4">
+
+                <div className="flex gap-4 mb-8">
                     <button
-                        onClick={resetGame}
+                        onClick={replayGame}
                         className="inline-flex items-center gap-2 bg-beige text-gray-800 py-3 px-6 rounded-xl font-bold"
                     >
                         <RotateCcw className="w-4 h-4" /> Play Again
@@ -219,6 +259,39 @@ const GameSelectPage: React.FC = () => {
                         Change Settings
                     </button>
                 </div>
+
+                {wrongWords.length > 0 && (
+                    <div className="w-full max-w-md">
+                        <h2 className="text-lg font-semibold text-gray-700 mb-3 text-center">
+                            Words to review ({wrongWords.length})
+                        </h2>
+                        <div className="space-y-2">
+                            {wrongWords.map((word, i) => (
+                                <div
+                                    key={i}
+                                    className="flex items-center bg-white rounded-xl px-4 py-3 shadow-sm gap-2"
+                                >
+                                    <div className="flex items-center gap-2 shrink-0 min-w-0">
+                                        <span className="text-red-400 font-bold shrink-0">&#10005;</span>
+                                        <span className="font-semibold text-gray-900 truncate">{word.Word}</span>
+                                        {word.Type && (
+                                            <span className="text-xs text-purple-500 bg-purple-50 px-1.5 py-0.5 rounded shrink-0">
+                                                {word.Type}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className="text-gray-500 text-sm text-right ml-auto min-w-0 truncate">
+                                        {word.Meaning}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {wrongWords.length === 0 && (
+                    <p className="text-green-600 font-medium">No mistakes — you nailed it!</p>
+                )}
             </div>
         );
     }
@@ -242,16 +315,43 @@ const GameSelectPage: React.FC = () => {
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm p-8 w-full max-w-md mb-8 text-center">
-                <p className="text-gray-900 text-2xl font-semibold leading-relaxed">
+                {/* Meaning - Vietnamese definition */}
+                <p className="text-gray-900 text-2xl font-semibold leading-relaxed mb-4">
                     {currentQuestion.correctWord.Meaning}
                 </p>
-                {currentQuestion.correctWord.Pronounce && (
-                    <button
-                        onClick={() => speakWord(currentQuestion.correctWord.Word)}
-                        className="mt-4 inline-flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors text-sm"
-                    >
-                        <Volume2 className="w-4 h-4" /> {currentQuestion.correctWord.Pronounce}
-                    </button>
+
+                {/* Level & Type badges (render independently) */}
+                {(currentQuestion.correctWord.Level || currentQuestion.correctWord.Type) && (
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                        {currentQuestion.correctWord.Level && (
+                            <span className="inline-block px-2.5 py-0.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-full">
+                                {currentQuestion.correctWord.Level}
+                            </span>
+                        )}
+                        {currentQuestion.correctWord.Type && (
+                            <span className="inline-block px-2.5 py-0.5 bg-purple-50 text-purple-600 text-xs font-medium rounded-full">
+                                {currentQuestion.correctWord.Type}
+                            </span>
+                        )}
+                    </div>
+                )}
+
+                {/* Synonyms */}
+                {currentQuestion.correctWord.Synonyms && currentQuestion.correctWord.Synonyms.length > 0 && (
+                    <div className="mb-3 text-xs text-gray-500">
+                        <span className="font-medium text-gray-400">Synonyms: </span>
+                        {currentQuestion.correctWord.Synonyms.join(', ')}
+                    </div>
+                )}
+
+                {/* Example with hidden keyword */}
+                {currentQuestion.correctWord.Example && (
+                    <div className="mt-4 p-3.5 bg-gray-50 rounded-xl text-sm text-gray-600 italic text-left">
+                        <span className="not-italic font-semibold text-gray-500 text-xs uppercase tracking-wider block mb-1.5">
+                            Example
+                        </span>
+                        {hideWordInExample(currentQuestion.correctWord.Example, currentQuestion.correctWord.Word)}
+                    </div>
                 )}
             </div>
 
