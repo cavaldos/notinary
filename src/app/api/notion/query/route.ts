@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import NotionDatabase from '@/lib/notion-query';
+import { sleep } from '@/lib/notion-base';
 
+const MAX_RETRIES = 3;
 
 export async function POST(request: Request) {
     try {
         const { pageId, propertyName, selectValue } = await request.json();
+
         if (!pageId) {
             return NextResponse.json(
                 { success: false, message: 'ID là bắt buộc' },
@@ -21,14 +24,36 @@ export async function POST(request: Request) {
             );
         }
 
-        const result = await NotionDatabase.updateSelectProperty(pageId, propertyName, selectValue);
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            const result = await NotionDatabase.updateSelectProperty(
+                pageId, propertyName, selectValue
+            );
 
-        return NextResponse.json(
-            {
-                success: result.success,
-                data: result.data,
-            },
-        );
+            if (result.success) {
+                return NextResponse.json({
+                    success: true,
+                    data: result.data,
+                });
+            }
+
+            const isRateLimit =
+                result.error?.toLowerCase().includes('rate_limited') ||
+                result.error?.includes('429');
+
+            if (isRateLimit && attempt < MAX_RETRIES) {
+                const delay = Math.pow(2, attempt) * 1000;
+                console.warn(
+                    `[query/route] Notion rate limited, retry ${attempt}/${MAX_RETRIES} in ${delay}ms`
+                );
+                await sleep(delay);
+                continue;
+            }
+
+            return NextResponse.json(
+                { success: false, error: result.error || 'Notion API error' },
+                { status: 502 }
+            );
+        }
     } catch (error: any) {
         return NextResponse.json(
             { success: false, message: error.message },

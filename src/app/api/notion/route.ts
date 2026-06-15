@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import NotionDatabase from '@/lib/notion-api-en';
+import { sleep } from '@/lib/notion-base';
+
+const MAX_RETRIES = 3;
 
 export async function GET() {
     try {
@@ -12,17 +15,33 @@ export async function GET() {
             );
         }
 
-        const result = await NotionDatabase.getInProgressItems(databaseId);
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            const result = await NotionDatabase.getInProgressItems(databaseId);
 
+            if (result.success) {
+                return NextResponse.json({
+                    success: true,
+                    length: result.data?.length,
+                    data: result.data,
+                });
+            }
 
-        return NextResponse.json(
-            {
-                success: result.success,
-                length: result.data?.length,
-                data: result.data,
-            },
+            const isRateLimit =
+                result.error?.toLowerCase().includes('rate_limited') ||
+                result.error?.includes('429');
 
-        );
+            if (isRateLimit && attempt < MAX_RETRIES) {
+                const delay = Math.pow(2, attempt) * 1000;
+                console.warn(`[api/notion] Rate limited, retry ${attempt}/${MAX_RETRIES} in ${delay}ms`);
+                await sleep(delay);
+                continue;
+            }
+
+            return NextResponse.json(
+                { success: false, error: result.error || 'Notion API error' },
+                { status: 502 }
+            );
+        }
     } catch (error: any) {
         return NextResponse.json(
             { success: false, message: error.message },
@@ -51,14 +70,32 @@ export async function POST(request: Request) {
             );
         }
 
-        const result = await NotionDatabase.updateStatus(pageId, "Done");
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            const result = await NotionDatabase.updateStatus(pageId, 'Done');
 
-        return NextResponse.json(
-            {
-                success: result.success,
-                data: result.data,
-            },
-        );
+            if (result.success) {
+                return NextResponse.json({
+                    success: true,
+                    data: result.data,
+                });
+            }
+
+            const isRateLimit =
+                result.error?.toLowerCase().includes('rate_limited') ||
+                result.error?.includes('429');
+
+            if (isRateLimit && attempt < MAX_RETRIES) {
+                const delay = Math.pow(2, attempt) * 1000;
+                console.warn(`[api/notion] Rate limited, retry ${attempt}/${MAX_RETRIES} in ${delay}ms`);
+                await sleep(delay);
+                continue;
+            }
+
+            return NextResponse.json(
+                { success: false, error: result.error || 'Notion API error' },
+                { status: 502 }
+            );
+        }
     } catch (error: any) {
         return NextResponse.json(
             { success: false, message: error.message },

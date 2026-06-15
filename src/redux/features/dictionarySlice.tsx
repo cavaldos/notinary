@@ -42,6 +42,13 @@ const initialState: DictionaryState = {
     currentSpace: null,
 };
 
+/**
+ * How long to wait before re-fetching data from the API.
+ * During this window, cached data is considered "fresh" and no API call is made.
+ * Default: 5 minutes.
+ */
+const STALE_TIME_MS = 3 * 60 * 1000;
+
 const isDictionaryItem = (item: unknown): item is DictionaryItem => {
     if (typeof item !== 'object' || item === null) {
         return false;
@@ -59,19 +66,14 @@ const getErrorMessage = (error: unknown): string => {
     return 'Failed to fetch vocabulary';
 };
 
-const hasDataProperty = (value: unknown): value is { data: unknown } => {
-    return typeof value === 'object' && value !== null && 'data' in value;
-};
-
 /**
  * Cache-first, stale-while-revalidate thunk.
  *
- * 1. Always attempts to fetch fresh data from the API.
- * 2. If the fetch fails (rate limit, network error) AND cached data exists,
- *    returns the cached data as a graceful fallback — never shows error to user
- *    if we have something to show.
- * 3. The reducer skips loading state when cached data exists, so the user
- *    sees the old data immediately while new data loads in the background.
+ * 1. If cached data exists and is fresh (within STALE_TIME_MS), skip API call entirely.
+ * 2. If cached data exists but is stale, show it immediately, fetch fresh in background.
+ * 3. If the fetch fails (rate limit, network error) AND cached data exists,
+ *    returns cached data as fallback — never shows error if we have something.
+ * 4. If no cache exists, show loading and fetch fresh data.
  */
 export const fetchDictionaryData = createAsyncThunk(
     'dictionary/fetchData',
@@ -80,9 +82,32 @@ export const fetchDictionaryData = createAsyncThunk(
         const cachedSpace = state.dictionary.spaces[space];
         const hasCached = cachedSpace?.loaded === true;
 
+        // ── Stale-time check: skip API call if data is fresh enough ──
+        if (hasCached && cachedSpace?.lastFetched) {
+            const age = Date.now() - cachedSpace.lastFetched;
+            if (age < STALE_TIME_MS) {
+                console.log(
+                    `[dictionarySlice] Data for "${space}" is fresh (${Math.round(age / 1000)}s old), skipping fetch`
+                );
+                return {
+                    space,
+                    total: cachedSpace.total,
+                    dictionary: cachedSpace.dictionary,
+                    fromCache: true,
+                    lastFetched: cachedSpace.lastFetched,
+                };
+            }
+        }
+
+        // ── Fetch fresh data from the API ──
         try {
             const response = await NotionService.getSpacedTimeItems(200, space);
-            const responseData = hasDataProperty(response) ? response.data : undefined;
+
+            // The response should have a `data` array from the API route
+            const responseData =
+                response && typeof response === 'object' && 'data' in response
+                    ? (response as { data: unknown }).data
+                    : undefined;
 
             if (Array.isArray(responseData)) {
                 const filteredData = responseData.filter(isDictionaryItem);

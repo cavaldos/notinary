@@ -1,122 +1,81 @@
 import axiosinstance from './axios.config';
 
-
-
 const NotionService = {
     async getWordInprogress() {
-        try {
-            const response = await axiosinstance.get(`/api/notion`);
-            return response
+        const response = (await axiosinstance.get(`/api/notion`)) as Record<string, unknown>;
+
+        // If the API returned an error (non-2xx), it would have thrown
+        // But double-check the response payload
+        if (response?.success === false) {
+            throw new Error((response.error as string) || 'Failed to fetch in-progress items');
         }
-        catch (error: any) {
-            console.error('Lỗi khi lấy thông tin database:1', error);
-            return {
-                success: false,
-                error: error.message || 'Không thể lấy thông tin database'
-            };
-        }
-    },
-    async upDateToDone(id: string) {
-        try {
-            const response = await axiosinstance.post(`/api/notion`,
-                {
-                    pageId: id
-                }
-            );
-            return response
-        }
-        catch (error: any) {
-            console.error('Lỗi khi lấy thông tin từ Notion:', error);
-            return {
-                success: false,
-                error: error.message || 'Không thể lấy thông tin từ Notion'
-            };
-        }
+
+        return response;
     },
 
+    async upDateToDone(id: string) {
+        const response = (await axiosinstance.post(`/api/notion`, {
+            pageId: id,
+        })) as Record<string, unknown>;
+
+        if (response?.success === false) {
+            throw new Error((response.error as string) || 'Failed to update status');
+        }
+
+        return response;
+    },
 
     async updateSpacedTime(pageId: string, selectValue: string, status: string) {
-
-
-        const levels = ["L1", "L2", "L3", "L4", "L5"];
+        const levels = ['L1', 'L2', 'L3', 'L4', 'L5'];
 
         if (!levels.includes(selectValue)) {
-            return {
-                success: false,
-                error: 'Giá trị select không hợp lệ'
-            };
+            throw new Error('Giá trị select không hợp lệ');
         }
 
-        if (status !== "up" && status !== "down") {
-            return {
-                success: false,
-                error: 'Status phải là "up" hoặc "down"'
-            };
+        if (status !== 'up' && status !== 'down') {
+            throw new Error('Status phải là "up" hoặc "down"');
         }
 
         // Tìm index của level hiện tại
         const currentIndex = levels.indexOf(selectValue);
         let newIndex: number;
 
-        if (status === "up") {
-            // Tăng level (nếu đã ở level cao nhất thì giữ nguyên)
+        if (status === 'up') {
             newIndex = Math.min(currentIndex + 1, levels.length - 1);
         } else {
-            // Giảm level (nếu đã ở level thấp nhất thì giữ nguyên)
             newIndex = Math.max(currentIndex - 1, 0);
         }
 
         const newSelectValue = levels[newIndex];
 
-        try {
-            const response = await axiosinstance.post(`/api/notion/query`, {
-                pageId: pageId,
-                propertyName: "Spaced Time",
-                selectValue: newSelectValue // Sử dụng giá trị mới đã tính toán
-            });
-            return response;
-        } catch (error: any) {
-            console.error('Lỗi khi cập nhật thuộc tính:', error);
-            return {
-                success: false,
-                error: error.message || 'Không thể cập nhật thuộc tính'
-            };
+        const response = (await axiosinstance.post(`/api/notion/query`, {
+            pageId: pageId,
+            propertyName: 'Spaced Time',
+            selectValue: newSelectValue,
+        })) as Record<string, unknown>;
+
+        if (response?.success === false) {
+            throw new Error((response.error as string) || 'Failed to update spaced time');
         }
+
+        return response;
     },
+
     async getSpacedTimeItems(pageSize: number, equalsValue: string) {
-        /**
-         * equalsValue could be: "L1", "L2", "L3", "L4", "L5"
-         */
-        try {
-            console.log(`Fetching spaced time items: pageSize=${pageSize}, space=${equalsValue}`);
-            const response = await axiosinstance.post(`/api/notion/space`, {
-                pageSize: pageSize,
-                equalsValue: equalsValue
-            });
-            console.log('API response received successfully');
-            return response;
-        }
-        catch (error: any) {
-            console.error('Lỗi khi lấy dữ liệu từ Notion:', error);
+        const response = (await axiosinstance.post(`/api/notion/space`, {
+            pageSize: pageSize,
+            equalsValue: equalsValue,
+        })) as Record<string, unknown>;
 
-            // Xử lý các loại lỗi khác nhau
-            let errorMessage = 'Không thể lấy dữ liệu từ Notion';
-            if (error.code === 'ECONNABORTED') {
-                errorMessage = 'Yêu cầu bị timeout. Vui lòng thử lại sau.';
-            } else if (error.response) {
-                errorMessage = `Lỗi server: ${error.response.status} - ${error.response.statusText}`;
-            } else if (error.request) {
-                errorMessage = 'Không thể kết nối đến server. Kiểm tra kết nối mạng.';
-            }
-
-            return {
-                success: false,
-                error: errorMessage,
-                originalError: error.message
-            };
+        // API route may return success:false for rate-limit errors
+        // (those come through as 502 status → axios throws → we re-throw)
+        // But also check the payload for safety
+        if (response?.success === false) {
+            throw new Error((response.error as string) || 'Failed to fetch spaced time items');
         }
+
+        return response;
     },
+};
 
-
-}
 export default NotionService;
