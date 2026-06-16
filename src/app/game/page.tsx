@@ -277,7 +277,7 @@ const GameSelectPage: React.FC = () => {
                 </div>
 
                 {wrongWords.length > 0 && (
-                    <div className="w-full max-w-md">
+                    <div className="w-full max-w-md mb-8">
                         <h2 className="text-base font-semibold text-gray-700 mb-2 text-center">
                             Words to review ({wrongWords.length})
                         </h2>
