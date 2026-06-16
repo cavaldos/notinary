@@ -148,7 +148,8 @@ body {
 
 /* Keep tag text dark on colored backgrounds in dark mode */
 [data-theme="dark"] .bg-\[\#dcebdd\],
-[data-theme="dark"] .bg-\[\#fbded9\] {
+[data-theme="dark"] .bg-\[\#fbded9\],
+[data-theme="dark"] .bg-\[\#fef3c7\] {
   color: #1f2937;
 }
 
@@ -185,4 +186,13 @@ body {
 [data-theme="dark"] .text-purple-600,
 [data-theme="dark"] .text-purple-500 {
   color: #d8b4fe;
+}
+
+[data-theme="dark"] .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.15);
+}
+
+[data-theme="dark"] .text-amber-600,
+[data-theme="dark"] .text-amber-500 {
+  color: #fcd34d;
 }

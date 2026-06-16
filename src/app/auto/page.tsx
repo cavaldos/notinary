@@ -228,6 +228,7 @@ const GamesPage: React.FC = () => {
                                 meaning={item.Meaning}
                                 example={item.Example}
                                 synonyms={item.Synonyms}
+                                genre={item.Genre}
                             />
                         </div>
                     ))}

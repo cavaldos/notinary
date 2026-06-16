@@ -11,6 +11,7 @@ export interface DictionaryItem {
     Meaning: string;
     Example?: string;
     Synonyms?: string[];
+    Genre?: string;
 }
 
 interface DictionarySpaceState {

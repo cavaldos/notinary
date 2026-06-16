@@ -23,14 +23,18 @@ const hideWordInExample = (example: string, word: string): React.ReactNode => {
     );
 };
 
-const normalizeType = (type: string): string => {
+const isFrench = process.env.NEXT_PUBLIC_SPEECH_LANGUAGE?.startsWith('fr') ?? false;
+
+const normalizeType = (type: string | undefined): string => {
+    if (!type || typeof type !== 'string') return '';
     const t = type.toLowerCase().trim();
-    if (t === 'verb' || t === 'in-verb') return 'verb';
+    // French doesn't use "in-verb" — skip normalization
+    if (!isFrench && (t === 'verb' || t === 'in-verb')) return 'verb';
     return t;
 };
 
 const typeDisplayLabels: Record<string, string> = {
-    all: 'All',
+    all: isFrench ? 'Tous' : 'All',
     verb: 'Verb',
     noun: 'Noun',
     adj: 'Adj',
@@ -307,6 +311,11 @@ const GameSelectPage: React.FC = () => {
                                                 {word.Type}
                                             </span>
                                         )}
+                                        {word.Genre && (
+                                            <span className="text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded shrink-0">
+                                                {word.Genre}
+                                            </span>
+                                        )}
                                     </div>
                                     <span className="text-gray-500 text-sm text-right ml-auto min-w-0 truncate">
                                         {word.Meaning}
@@ -359,7 +368,7 @@ const GameSelectPage: React.FC = () => {
                         {currentQuestion.correctWord.Meaning}
                     </p>
 
-                    {(currentQuestion.correctWord.Level || currentQuestion.correctWord.Type) && (
+                    {(currentQuestion.correctWord.Level || currentQuestion.correctWord.Type || currentQuestion.correctWord.Genre) && (
                         <div className="flex items-center justify-center gap-2 mb-3">
                             {currentQuestion.correctWord.Level && (
                                 <span className="inline-block px-2.5 py-0.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-full">
@@ -369,6 +378,11 @@ const GameSelectPage: React.FC = () => {
                             {currentQuestion.correctWord.Type && (
                                 <span className="inline-block px-2.5 py-0.5 bg-purple-50 text-purple-600 text-xs font-medium rounded-full">
                                     {currentQuestion.correctWord.Type}
+                                </span>
+                            )}
+                            {currentQuestion.correctWord.Genre && (
+                                <span className="inline-block px-2.5 py-0.5 bg-amber-50 text-amber-600 text-xs font-medium rounded-full">
+                                    {currentQuestion.correctWord.Genre}
                                 </span>
                             )}
                         </div>
@@ -416,6 +430,11 @@ const GameSelectPage: React.FC = () => {
                                         {option.Word}
                                         {showResult && (
                                             <Volume2 className="w-3.5 h-3.5 text-gray-400 hover:text-gray-700 transition-colors shrink-0" />
+                                        )}
+                                        {showResult && option.Genre && (
+                                            <span className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded font-medium">
+                                                {option.Genre}
+                                            </span>
                                         )}
                                     </span>
                                     <span className="text-xs text-gray-400 truncate min-w-0 flex-1 text-right">

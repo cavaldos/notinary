@@ -16,9 +16,10 @@ interface CardProps {
     pronunciation: string;
     example?: string;
     synonyms?: string[];
+    genre?: string;
 }
 
-const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, meaning, pronunciation, example, synonyms = [] }) => {
+const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, meaning, pronunciation, example, synonyms = [], genre }) => {
     const showMeaning = true;
     const params = useParams();
     const { space } = params;
@@ -77,7 +78,7 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
             </div>
 
             <div className="space-y-4">
-                {/* Type và Level tags */}
+                {/* Type, Level và Genre tags */}
                 <div className="flex items-center justify-center gap-2 mb-4">
                     {type && (
                         <span className="inline-block bg-[#dcebdd] text-gray-800 px-3 py-1 rounded-md text-sm font-medium">
@@ -87,6 +88,11 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
                     {level && (
                         <span className="inline-block bg-[#fbded9] text-gray-800 px-3 py-1 rounded-md text-sm font-medium">
                             {level}
+                        </span>
+                    )}
+                    {genre && (
+                        <span className="inline-block bg-[#fef3c7] text-gray-800 px-3 py-1 rounded-md text-sm font-medium">
+                            {genre}
                         </span>
                     )}
                 </div>
