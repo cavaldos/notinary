@@ -192,7 +192,7 @@ const GameSelectPage: React.FC = () => {
     if (!gameStarted) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen p-6 pb-24">
-                <h1 className="text-3xl font-bold text-gray-900 mb-6">Game Select</h1>
+                <h1 className="text-3xl font-bold text-gray-900 mb-6">Game</h1>
 
             <div className="mb-4 w-full max-w-xs">
                 <label className="block text-gray-600 mb-2 text-sm font-medium">Space</label>
