@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useDictionary } from '@/hooks/useDictionary';
 import type { DictionaryItem } from '@/redux/features/dictionarySlice';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, ArrowUp } from 'lucide-react';
 
 type Question = {
     correctWord: DictionaryItem;
@@ -51,6 +51,10 @@ const GameSelectPage: React.FC = () => {
     const [gameFinished, setGameFinished] = useState(false);
     const [wrongWords, setWrongWords] = useState<DictionaryItem[]>([]);
     const [questionCount, setQuestionCount] = useState(20);
+
+    // Swipe gesture refs
+    const swipeStartY = useRef(0);
+    const swipeAreaRef = useRef<HTMLDivElement>(null);
 
     const spaceOptions = ['L1', 'L2', 'L3', 'L4'];
     const typeOptions = ['all', 'verb', 'noun', 'adj', 'adv', 'phrase'];
@@ -161,13 +165,25 @@ const GameSelectPage: React.FC = () => {
         setWrongWords([]);
     };
 
+    // Swipe gesture: only active after selecting an answer
+    const onSwipeStart = useCallback((clientY: number) => {
+        if (!showResult) return;
+        swipeStartY.current = clientY;
+    }, [showResult]);
+
+    const onSwipeEnd = useCallback((clientY: number) => {
+        if (!showResult) return;
+        const deltaY = swipeStartY.current - clientY;
+        if (deltaY > 40) handleNext();
+    }, [showResult, handleNext]);
+
     if (!gameStarted) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen p-6">
-                <h1 className="text-3xl font-bold text-gray-900 mb-8">Game Select</h1>
+            <div className="flex flex-col items-center justify-center min-h-screen p-6 pb-24">
+                <h1 className="text-3xl font-bold text-gray-900 mb-6">Game Select</h1>
 
-                <div className="mb-6 w-full max-w-xs">
-                    <label className="block text-gray-600 mb-2 text-sm font-medium">Space</label>
+            <div className="mb-4 w-full max-w-xs">
+                <label className="block text-gray-600 mb-2 text-sm font-medium">Space</label>
                     <div className="flex gap-2">
                         {spaceOptions.map(s => (
                             <button
@@ -181,7 +197,7 @@ const GameSelectPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="mb-8 w-full max-w-xs">
+                <div className="mb-6 w-full max-w-xs">
                     <label className="block text-gray-600 mb-2 text-sm font-medium">Type</label>
                     <div className="flex flex-wrap gap-2 justify-center">
                         {typeOptions.map(t => (
@@ -199,7 +215,7 @@ const GameSelectPage: React.FC = () => {
                     </p>
                 </div>
 
-                <div className="mb-8 w-full max-w-xs">
+                <div className="mb-6 w-full max-w-xs">
                     <label className="block text-gray-600 dark:text-gray-400 mb-2 text-sm font-medium">
                         Questions: <span className="font-bold text-gray-600 dark:text-gray-400">{questionCount}</span>
                     </label>
@@ -220,7 +236,7 @@ const GameSelectPage: React.FC = () => {
                 <button
                     onClick={generateQuestions}
                     disabled={filteredItems.length < 4 || loading}
-                    className="bg-white shadow-md text-gray-900 py-3 px-8 rounded-xl font-bold text-lg disabled:opacity-50 transition-opacity"
+                    className="bg-white shadow-md text-gray-900 py-2.5 px-8 rounded-xl font-bold disabled:opacity-50 transition-opacity"
                 >
                     {loading ? 'Loading...' : 'Start Game'}
                 </button>
@@ -230,12 +246,12 @@ const GameSelectPage: React.FC = () => {
 
     if (gameFinished) {
         return (
-            <div className="flex flex-col items-center min-h-screen p-6">
-                <h1 className="text-3xl font-bold text-gray-900 mb-4 mt-8">Game Over</h1>
-                <div className="text-7xl font-bold text-gray-900 mb-2">
+            <div className="flex flex-col items-center min-h-screen p-6 pb-24">
+                <h1 className="text-3xl font-bold text-gray-900 mb-3 mt-6">Game Over</h1>
+                <div className="text-6xl font-bold text-gray-900 mb-1">
                     {score} / {questions.length}
                 </div>
-                <p className="text-gray-400 mb-8 text-lg">
+                <p className="text-gray-400 mb-6 text-base">
                     {score === questions.length
                         ? 'Perfect!'
                         : score >= questions.length * 0.7
@@ -245,16 +261,16 @@ const GameSelectPage: React.FC = () => {
                                 : 'Keep practicing!'}
                 </p>
 
-                <div className="flex gap-4 mb-8">
+                <div className="flex gap-3 mb-6">
                     <button
                         onClick={replayGame}
-                        className="inline-flex items-center gap-2 bg-beige text-gray-800 py-3 px-6 rounded-xl font-bold"
+                        className="inline-flex items-center gap-2 bg-beige text-gray-800 py-2.5 px-5 rounded-xl font-semibold text-sm"
                     >
-                        <RotateCcw className="w-4 h-4" /> Play Again
+                        <RotateCcw className="w-3.5 h-3.5" /> Play Again
                     </button>
                     <button
                         onClick={resetGame}
-                        className="bg-white shadow-md text-gray-900 py-3 px-6 rounded-xl font-bold"
+                        className="bg-white shadow-md text-gray-900 py-2.5 px-5 rounded-xl font-semibold text-sm"
                     >
                         Change Settings
                     </button>
@@ -262,14 +278,14 @@ const GameSelectPage: React.FC = () => {
 
                 {wrongWords.length > 0 && (
                     <div className="w-full max-w-md">
-                        <h2 className="text-lg font-semibold text-gray-700 mb-3 text-center">
+                        <h2 className="text-base font-semibold text-gray-700 mb-2 text-center">
                             Words to review ({wrongWords.length})
                         </h2>
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                             {wrongWords.map((word, i) => (
                                 <div
                                     key={i}
-                                    className="flex items-center bg-white rounded-xl px-4 py-3 shadow-sm gap-2"
+                                    className="flex items-center bg-white rounded-xl px-3 py-2.5 shadow-sm gap-2 text-sm"
                                 >
                                     <div className="flex items-center gap-2 shrink-0 min-w-0">
                                         <span className="text-red-400 font-bold shrink-0">&#10005;</span>
@@ -300,108 +316,123 @@ const GameSelectPage: React.FC = () => {
     if (!currentQuestion) return null;
 
     return (
-        <div className="flex flex-col items-center min-h-screen p-6">
-            <div className="w-full max-w-md mb-6">
-                <div className="flex justify-between text-gray-400 text-sm mb-2">
+        <div className="flex flex-col items-center min-h-screen p-6 pb-24">
+            {/* Progress bar */}
+            <div className="w-full max-w-md mb-4">
+                <div className="flex justify-between text-gray-400 text-xs mb-1.5">
                     <span>{currentQ + 1} / {questions.length}</span>
                     <span>{score} correct</span>
                 </div>
-                <div className="w-full bg-beige rounded-full h-2">
+                <div className="w-full bg-beige rounded-full h-1.5">
                     <div
-                        className="bg-gray-400 h-2 rounded-full transition-all duration-300"
+                        className="bg-gray-400 h-1.5 rounded-full transition-all duration-300"
                         style={{ width: `${((currentQ + 1) / questions.length) * 100}%` }}
                     />
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm p-8 w-full max-w-md mb-8 text-center">
-                {/* Meaning - Vietnamese definition */}
-                <p className="text-gray-900 text-2xl font-semibold leading-relaxed mb-4">
-                    {currentQuestion.correctWord.Meaning}
-                </p>
+            {/* Swipeable question area */}
+            <div
+                ref={swipeAreaRef}
+                onTouchStart={e => onSwipeStart(e.touches[0].clientY)}
+                onTouchEnd={e => onSwipeEnd(e.changedTouches[0].clientY)}
+                onMouseDown={e => onSwipeStart(e.clientY)}
+                onMouseUp={e => onSwipeEnd(e.clientY)}
+                className="w-full flex flex-col items-center"
+                style={{ touchAction: 'pan-x' }}
+            >
+                {/* Question card */}
+                <div className="bg-white rounded-2xl shadow-sm p-5 w-full max-w-md mb-4 text-center">
+                    <p className="text-gray-900 text-xl font-semibold leading-relaxed mb-3">
+                        {currentQuestion.correctWord.Meaning}
+                    </p>
 
-                {/* Level & Type badges (render independently) */}
-                {(currentQuestion.correctWord.Level || currentQuestion.correctWord.Type) && (
-                    <div className="flex items-center justify-center gap-2 mb-3">
-                        {currentQuestion.correctWord.Level && (
-                            <span className="inline-block px-2.5 py-0.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-full">
-                                {currentQuestion.correctWord.Level}
-                            </span>
-                        )}
-                        {currentQuestion.correctWord.Type && (
-                            <span className="inline-block px-2.5 py-0.5 bg-purple-50 text-purple-600 text-xs font-medium rounded-full">
-                                {currentQuestion.correctWord.Type}
-                            </span>
-                        )}
-                    </div>
-                )}
+                    {(currentQuestion.correctWord.Level || currentQuestion.correctWord.Type) && (
+                        <div className="flex items-center justify-center gap-2 mb-3">
+                            {currentQuestion.correctWord.Level && (
+                                <span className="inline-block px-2.5 py-0.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-full">
+                                    {currentQuestion.correctWord.Level}
+                                </span>
+                            )}
+                            {currentQuestion.correctWord.Type && (
+                                <span className="inline-block px-2.5 py-0.5 bg-purple-50 text-purple-600 text-xs font-medium rounded-full">
+                                    {currentQuestion.correctWord.Type}
+                                </span>
+                            )}
+                        </div>
+                    )}
 
-                {/* Synonyms */}
-                {currentQuestion.correctWord.Synonyms && currentQuestion.correctWord.Synonyms.length > 0 && (
-                    <div className="mb-3 text-xs text-gray-500">
-                        <span className="font-medium text-gray-400">Synonyms: </span>
-                        {currentQuestion.correctWord.Synonyms.join(', ')}
-                    </div>
-                )}
+                    {currentQuestion.correctWord.Synonyms && currentQuestion.correctWord.Synonyms.length > 0 && (
+                        <div className="mb-2 text-[11px] text-gray-500">
+                            <span className="font-medium text-gray-400">Synonyms: </span>
+                            {currentQuestion.correctWord.Synonyms.join(', ')}
+                        </div>
+                    )}
 
-                {/* Example with hidden keyword */}
-                {currentQuestion.correctWord.Example && (
-                    <div className="mt-4 p-3.5 bg-gray-50 rounded-xl text-sm text-gray-600 italic text-left">
-                        <span className="not-italic font-semibold text-gray-500 text-xs uppercase tracking-wider block mb-1.5">
-                            Example
-                        </span>
-                        {hideWordInExample(currentQuestion.correctWord.Example, currentQuestion.correctWord.Word)}
-                    </div>
-                )}
-            </div>
+                    {currentQuestion.correctWord.Example && (
+                        <div className="mt-3 p-3 bg-gray-50 rounded-xl text-xs text-gray-600 italic text-left">
+                    
+                            {hideWordInExample(currentQuestion.correctWord.Example, currentQuestion.correctWord.Word)}
+                        </div>
+                    )}
+                </div>
 
-            <div className="w-full max-w-md space-y-3">
-                {currentQuestion.options.map((option, i) => {
-                    let btnStyle = 'bg-white hover:shadow-md';
-                    if (showResult) {
-                        if (option.Word === currentQuestion.correctWord.Word) {
-                            btnStyle = 'bg-green-50 text-green-800';
-                        } else if (option.Word === selectedAnswer) {
-                            btnStyle = 'bg-red-50 text-red-800';
-                        } else {
-                            btnStyle = 'bg-white opacity-50';
+                {/* Options */}
+                <div className="w-full max-w-md space-y-2">
+                    {currentQuestion.options.map((option, i) => {
+                        let btnStyle = 'bg-white hover:shadow-md';
+                        if (showResult) {
+                            if (option.Word === currentQuestion.correctWord.Word) {
+                                btnStyle = 'bg-green-50 text-green-800';
+                            } else if (option.Word === selectedAnswer) {
+                                btnStyle = 'bg-red-50 text-red-800';
+                            } else {
+                                btnStyle = 'bg-white opacity-50';
+                            }
                         }
-                    }
-                    return (
-                        <button
-                            key={i}
-                            onClick={() => handleSelectAnswer(option.Word)}
-                            disabled={showResult}
-                            className={`w-full py-4 px-6 rounded-xl text-left font-medium text-gray-800 transition-all ${btnStyle}`}
-                        >
-                            <div className="flex items-center gap-2">
-                                <span className="shrink-0">
-                                    <span className="text-gray-400 mr-2">{String.fromCharCode(65 + i)}.</span>
-                                    {option.Word}
-                                </span>
-                                <span className="text-xs text-gray-400 truncate min-w-0 flex-1 text-right">
-                                    {showResult ? option.Meaning : ''}
-                                </span>
-                                {showResult && option.Word === currentQuestion.correctWord.Word && (
-                                    <span className="text-green-600 font-bold shrink-0 text-xs">Correct</span>
-                                )}
-                                {showResult && option.Word === selectedAnswer && option.Word !== currentQuestion.correctWord.Word && (
-                                    <span className="text-red-600 font-bold shrink-0 text-xs">Wrong</span>
-                                )}
-                            </div>
-                        </button>
-                    );
-                })}
-            </div>
+                        return (
+                            <button
+                                key={i}
+                                onClick={() => handleSelectAnswer(option.Word)}
+                                disabled={showResult}
+                                className={`w-full py-3 px-4 rounded-xl text-left font-medium text-gray-800 transition-all ${btnStyle}`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <span className="shrink-0">
+                                        <span className="text-gray-400 mr-2">{String.fromCharCode(65 + i)}.</span>
+                                        {option.Word}
+                                    </span>
+                                    <span className="text-xs text-gray-400 truncate min-w-0 flex-1 text-right">
+                                        {showResult ? option.Meaning : ''}
+                                    </span>
+                                    {showResult && option.Word === currentQuestion.correctWord.Word && (
+                                        <span className="text-green-600 font-bold shrink-0 text-xs">Correct</span>
+                                    )}
+                                    {showResult && option.Word === selectedAnswer && option.Word !== currentQuestion.correctWord.Word && (
+                                        <span className="text-red-600 font-bold shrink-0 text-xs">Wrong</span>
+                                    )}
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
 
-            {showResult && (
-                <button
-                    onClick={handleNext}
-                    className="mt-8 bg-white shadow-md text-gray-900 py-3 px-10 rounded-xl font-bold text-lg transition-colors"
-                >
-                    {currentQ + 1 < questions.length ? 'Next' : 'See Results'}
-                </button>
-            )}
+                {/* Next button + swipe hint */}
+                {showResult && (
+                    <div className="mt-5 flex flex-col items-center gap-2">
+                        <button
+                            onClick={handleNext}
+                            className="bg-white shadow-md text-gray-900 py-2.5 px-8 rounded-xl font-bold transition-colors hover:shadow-lg active:scale-95"
+                        >
+                            {currentQ + 1 < questions.length ? 'Next →' : 'See Results'}
+                        </button>
+                        <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                            <ArrowUp className="w-3 h-3" />
+                            Swipe up
+                        </span>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

@@ -169,3 +169,20 @@ body {
 [data-theme="dark"] .text-red-600 {
   color: #fca5a5;
 }
+
+[data-theme="dark"] .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="dark"] .text-blue-600 {
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .bg-purple-50 {
+  background-color: rgba(168, 85, 247, 0.15);
+}
+
+[data-theme="dark"] .text-purple-600,
+[data-theme="dark"] .text-purple-500 {
+  color: #d8b4fe;
+}
