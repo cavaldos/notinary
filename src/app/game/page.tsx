@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useDictionary } from '@/hooks/useDictionary';
 import type { DictionaryItem } from '@/redux/features/dictionarySlice';
-import { RotateCcw, ArrowUp } from 'lucide-react';
+import { RotateCcw, ArrowUp, Volume2 } from 'lucide-react';
+import useTextToSpeech from '@/hooks/useTextToSpeech';
 
 type Question = {
     correctWord: DictionaryItem;
@@ -51,6 +52,17 @@ const GameSelectPage: React.FC = () => {
     const [gameFinished, setGameFinished] = useState(false);
     const [wrongWords, setWrongWords] = useState<DictionaryItem[]>([]);
     const [questionCount, setQuestionCount] = useState(20);
+
+    const { speak, stop } = useTextToSpeech();
+
+    const handleSpeakWord = useCallback((word: string) => {
+        speak(word, { language: process.env.NEXT_PUBLIC_SPEECH_LANGUAGE || 'en' });
+    }, [speak]);
+
+    // Cleanup speech on unmount
+    useEffect(() => {
+        return () => stop();
+    }, [stop]);
 
     // Swipe gesture refs
     const swipeStartY = useRef(0);
@@ -383,24 +395,28 @@ const GameSelectPage: React.FC = () => {
                         let btnStyle = 'bg-white hover:shadow-md';
                         if (showResult) {
                             if (option.Word === currentQuestion.correctWord.Word) {
-                                btnStyle = 'bg-green-50 text-green-800';
+                                btnStyle = 'bg-green-50 text-green-800 border border-green-200';
                             } else if (option.Word === selectedAnswer) {
-                                btnStyle = 'bg-red-50 text-red-800';
+                                btnStyle = 'bg-red-50 text-red-800 border border-red-200';
                             } else {
-                                btnStyle = 'bg-white opacity-50';
+                                btnStyle = 'bg-white opacity-60';
                             }
+                        } else {
+                            btnStyle = 'bg-white hover:shadow-md hover:bg-gray-50 active:scale-[0.98]';
                         }
                         return (
                             <button
                                 key={i}
-                                onClick={() => handleSelectAnswer(option.Word)}
-                                disabled={showResult}
+                                onClick={() => showResult ? handleSpeakWord(option.Word) : handleSelectAnswer(option.Word)}
                                 className={`w-full py-3 px-4 rounded-xl text-left font-medium text-gray-800 transition-all ${btnStyle}`}
                             >
                                 <div className="flex items-center gap-2">
-                                    <span className="shrink-0">
-                                        <span className="text-gray-400 mr-2">{String.fromCharCode(65 + i)}.</span>
+                                    <span className="shrink-0 flex items-center gap-1.5">
+                                        <span className="text-gray-400 mr-1">{String.fromCharCode(65 + i)}.</span>
                                         {option.Word}
+                                        {showResult && (
+                                            <Volume2 className="w-3.5 h-3.5 text-gray-400 hover:text-gray-700 transition-colors shrink-0" />
+                                        )}
                                     </span>
                                     <span className="text-xs text-gray-400 truncate min-w-0 flex-1 text-right">
                                         {showResult ? option.Meaning : ''}
