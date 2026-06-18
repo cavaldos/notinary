@@ -170,6 +170,42 @@ const GameSelectPage: React.FC = () => {
         setGameFinished(false);
     };
 
+    const replayMistakes = useCallback(() => {
+        if (wrongWords.length === 0) return;
+
+        const shuffled = shuffleArray(wrongWords);
+        const totalQuestions = Math.min(shuffled.length, questionCount);
+        const selectedWords = shuffled.slice(0, totalQuestions);
+
+        const generatedQuestions: Question[] = selectedWords.map((correctWord) => {
+            const correctType = normalizeType(correctWord.Type);
+            const sameTypePool = (itemsByType.get(correctType) ?? [])
+                .filter(item => item.Word !== correctWord.Word);
+            let distractorPool = shuffleArray(sameTypePool);
+
+            if (distractorPool.length < 3) {
+                const otherTypePool = dictionary.filter(
+                    item => item.Word !== correctWord.Word && normalizeType(item.Type) !== correctType
+                );
+                distractorPool = [...distractorPool, ...shuffleArray(otherTypePool)];
+            }
+
+            const distractors = distractorPool.slice(0, 3);
+            const options = shuffleArray([correctWord, ...distractors]);
+
+            return { correctWord, options };
+        });
+
+        setQuestions(generatedQuestions);
+        setCurrentQ(0);
+        setScore(0);
+        setWrongWords([]);
+        setSelectedAnswer(null);
+        setShowResult(false);
+        setGameFinished(false);
+        setGameStarted(true);
+    }, [wrongWords, dictionary, itemsByType, questionCount]);
+
     const resetGame = () => {
         setGameStarted(false);
         setGameFinished(false);
@@ -284,6 +320,14 @@ const GameSelectPage: React.FC = () => {
                     >
                         <RotateCcw className="w-3.5 h-3.5" /> Play Again
                     </button>
+                    {wrongWords.length > 0 && (
+                        <button
+                            onClick={replayMistakes}
+                            className="inline-flex items-center gap-2 bg-amber-100 text-amber-800 py-2.5 px-5 rounded-xl font-semibold text-sm hover:bg-amber-200 transition-colors"
+                        >
+                            <RotateCcw className="w-3.5 h-3.5" /> Replay Mistakes ({wrongWords.length})
+                        </button>
+                    )}
                     <button
                         onClick={resetGame}
                         className="bg-white shadow-md text-gray-900 py-2.5 px-5 rounded-xl font-semibold text-sm"
