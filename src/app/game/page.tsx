@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useDictionary } from '@/hooks/useDictionary';
 import type { DictionaryItem } from '@/redux/features/dictionarySlice';
-import { RotateCcw, ArrowUp, Volume2 } from 'lucide-react';
+import { RotateCcw, ArrowUp, Volume2, ArrowRight } from 'lucide-react';
 import useTextToSpeech from '@/hooks/useTextToSpeech';
 
 type Question = {
@@ -56,6 +56,7 @@ const GameSelectPage: React.FC = () => {
     const [gameFinished, setGameFinished] = useState(false);
     const [wrongWords, setWrongWords] = useState<DictionaryItem[]>([]);
     const [questionCount, setQuestionCount] = useState(20);
+    const [gameMode, setGameMode] = useState<'vi-en' | 'en-vi'>('vi-en');
 
     const { speak, stop } = useTextToSpeech();
 
@@ -285,6 +286,19 @@ const GameSelectPage: React.FC = () => {
                     </div>
                 </div>
 
+                <div className="mb-6 w-full max-w-xs">
+                    <label className="block text-gray-600 mb-2 text-sm font-medium">Direction</label>
+                    <button
+                        onClick={() => setGameMode(prev => prev === 'vi-en' ? 'en-vi' : 'vi-en')}
+                        title={gameMode === 'vi-en' ? 'Show meaning, pick the word' : 'Show word, pick the meaning'}
+                        className="w-full py-2 px-3 rounded-xl font-medium transition-all bg-white shadow-md font-bold text-gray-900 flex items-center justify-center"
+                    >
+                        <ArrowRight
+                            className={`w-4 h-4 transition-transform duration-300 ${gameMode === 'en-vi' ? 'rotate-180' : ''}`}
+                        />
+                    </button>
+                </div>
+
                 <button
                     onClick={generateQuestions}
                     disabled={filteredItems.length < 4 || loading}
@@ -409,7 +423,7 @@ const GameSelectPage: React.FC = () => {
                 {/* Question card */}
                 <div className="bg-white rounded-2xl shadow-sm p-5 w-full max-w-md mb-4 text-center">
                     <p className="text-gray-900 text-xl font-semibold leading-relaxed mb-3">
-                        {currentQuestion.correctWord.Meaning}
+                        {gameMode === 'vi-en' ? currentQuestion.correctWord.Meaning : currentQuestion.correctWord.Word}
                     </p>
 
                     {(currentQuestion.correctWord.Level || currentQuestion.correctWord.Type || currentQuestion.correctWord.Genre) && (
@@ -471,18 +485,30 @@ const GameSelectPage: React.FC = () => {
                                 <div className="flex items-center gap-2">
                                     <span className="shrink-0 flex items-center gap-1.5">
                                         <span className="text-gray-400 mr-1">{String.fromCharCode(65 + i)}.</span>
-                                        {option.Word}
-                                        {showResult && (
+                                        {gameMode === 'vi-en' ? option.Word : option.Meaning}
+                                        {showResult && gameMode === 'vi-en' && (
                                             <Volume2 className="w-3.5 h-3.5 text-gray-400 hover:text-gray-700 transition-colors shrink-0" />
                                         )}
-                                        {showResult && option.Genre && (
+                                        {showResult && gameMode === 'vi-en' && option.Genre && (
                                             <span className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded font-medium">
                                                 {option.Genre}
                                             </span>
                                         )}
                                     </span>
                                     <span className="text-xs text-gray-400 truncate min-w-0 flex-1 text-right">
-                                        {showResult ? option.Meaning : ''}
+                                        {showResult ? (
+                                            gameMode === 'vi-en' ? option.Meaning : (
+                                                <span className="inline-flex items-center justify-end gap-1">
+                                                    <span className="truncate">{option.Word}</span>
+                                                    <Volume2 className="w-3.5 h-3.5 text-gray-400 hover:text-gray-700 transition-colors shrink-0" />
+                                                    {option.Genre && (
+                                                        <span className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded font-medium shrink-0">
+                                                            {option.Genre}
+                                                        </span>
+                                                    )}
+                                                </span>
+                                            )
+                                        ) : ''}
                                     </span>
                                     {showResult && option.Word === currentQuestion.correctWord.Word && (
                                         <span className="text-green-600 font-bold shrink-0 text-xs">Correct</span>
