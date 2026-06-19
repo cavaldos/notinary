@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useDictionary } from '@/hooks/useDictionary';
 import type { DictionaryItem } from '@/redux/features/dictionarySlice';
-import { RotateCcw, ArrowUp, Volume2, ArrowRight } from 'lucide-react';
+import { RotateCcw, ArrowUp, Volume2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import useTextToSpeech from '@/hooks/useTextToSpeech';
 
 type Question = {
@@ -57,6 +57,8 @@ const GameSelectPage: React.FC = () => {
     const [wrongWords, setWrongWords] = useState<DictionaryItem[]>([]);
     const [questionCount, setQuestionCount] = useState(20);
     const [gameMode, setGameMode] = useState<'vi-en' | 'en-vi'>('vi-en');
+    const [answersRevealed, setAnswersRevealed] = useState(false);
+    const [autoHideAnswers, setAutoHideAnswers] = useState(true);
 
     const { speak, stop } = useTextToSpeech();
 
@@ -138,6 +140,7 @@ const GameSelectPage: React.FC = () => {
         setSelectedAnswer(null);
         setShowResult(false);
         setGameFinished(false);
+        setAnswersRevealed(false);
         setGameStarted(true);
     }, [filteredItems, dictionary, itemsByType, questionCount]);
 
@@ -157,6 +160,7 @@ const GameSelectPage: React.FC = () => {
             setCurrentQ(prev => prev + 1);
             setSelectedAnswer(null);
             setShowResult(false);
+            setAnswersRevealed(false);
         } else {
             setGameFinished(true);
         }
@@ -169,6 +173,7 @@ const GameSelectPage: React.FC = () => {
         setSelectedAnswer(null);
         setShowResult(false);
         setGameFinished(false);
+        setAnswersRevealed(false);
     };
 
     const replayMistakes = useCallback(() => {
@@ -204,6 +209,7 @@ const GameSelectPage: React.FC = () => {
         setSelectedAnswer(null);
         setShowResult(false);
         setGameFinished(false);
+        setAnswersRevealed(false);
         setGameStarted(true);
     }, [wrongWords, dictionary, itemsByType, questionCount]);
 
@@ -216,6 +222,7 @@ const GameSelectPage: React.FC = () => {
         setShowResult(false);
         setScore(0);
         setWrongWords([]);
+        setAnswersRevealed(false);
     };
 
     // Swipe gesture: only active after selecting an answer
@@ -286,17 +293,37 @@ const GameSelectPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="mb-6 w-full max-w-xs">
-                    <label className="block text-gray-600 mb-2 text-sm font-medium">Direction</label>
-                    <button
-                        onClick={() => setGameMode(prev => prev === 'vi-en' ? 'en-vi' : 'vi-en')}
-                        title={gameMode === 'vi-en' ? 'Show meaning, pick the word' : 'Show word, pick the meaning'}
-                        className="w-full py-2 px-3 rounded-xl font-medium transition-all bg-white shadow-md font-bold text-gray-900 flex items-center justify-center"
-                    >
-                        <ArrowRight
-                            className={`w-4 h-4 transition-transform duration-300 ${gameMode === 'en-vi' ? 'rotate-180' : ''}`}
-                        />
-                    </button>
+                <div className="mb-6 w-full max-w-xs flex items-center gap-3">
+                    <div className="flex-1 flex flex-col items-center gap-1">
+                        <span className="text-[11px] text-gray-400 font-medium">Direction</span>
+                        <button
+                            onClick={() => setGameMode(prev => prev === 'vi-en' ? 'en-vi' : 'vi-en')}
+                            title={gameMode === 'vi-en' ? 'Show meaning, pick the word' : 'Show word, pick the meaning'}
+                            className="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center hover:shadow-md transition-all active:scale-95"
+                        >
+                            <ArrowRight
+                                className={`w-4 h-4 text-gray-600 transition-transform duration-300 ${gameMode === 'en-vi' ? 'rotate-180' : ''}`}
+                            />
+                        </button>
+                    </div>
+                    <div className="flex-1 flex flex-col items-center gap-1">
+                        <span className="text-[11px] text-gray-400 font-medium">Auto-hide</span>
+                        <button
+                            onClick={() => setAutoHideAnswers(prev => !prev)}
+                            title={autoHideAnswers ? 'Answers hidden by default' : 'Answers always visible'}
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95 ${
+                                autoHideAnswers
+                                    ? 'bg-white shadow-sm'
+                                    : 'bg-beige'
+                            }`}
+                        >
+                            {autoHideAnswers ? (
+                                <EyeOff className="w-4 h-4 text-gray-600" />
+                            ) : (
+                                <Eye className="w-4 h-4 text-gray-400" />
+                            )}
+                        </button>
+                    </div>
                 </div>
 
                 <button
@@ -461,8 +488,30 @@ const GameSelectPage: React.FC = () => {
                     )}
                 </div>
 
+                {/* Eye toggle — show/hide answers */}
+                {!showResult && autoHideAnswers && (
+                    <div className="w-full max-w-md mb-3 flex justify-center">
+                        <button
+                            onClick={() => setAnswersRevealed(prev => !prev)}
+                            className="inline-flex items-center gap-2 text-xs font-medium text-gray-500 hover:text-gray-800 transition-colors"
+                        >
+                            {answersRevealed ? (
+                                <>
+                                    <EyeOff className="w-4 h-4" />
+                                    Hide answers
+                                </>
+                            ) : (
+                                <>
+                                    <Eye className="w-4 h-4" />
+                                    Reveal answers
+                                </>
+                            )}
+                        </button>
+                    </div>
+                )}
+
                 {/* Options */}
-                <div className="w-full max-w-md space-y-2">
+                <div className={`w-full max-w-md space-y-2 transition-all duration-300 ${autoHideAnswers && !answersRevealed && !showResult ? 'blur-sm select-none pointer-events-none' : ''}`}>
                     {currentQuestion.options.map((option, i) => {
                         let btnStyle = 'bg-white hover:shadow-md';
                         if (showResult) {
