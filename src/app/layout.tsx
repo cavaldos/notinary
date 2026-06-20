@@ -41,7 +41,7 @@ export default function RootLayout({
       >
         <ProviderGlobal>
           <ThemeRoot>
-            <div className="flex flex-col h-screen bg-notion-background">
+            <div className="flex flex-col h-dvh overflow-hidden bg-notion-background">
               {children}
               <Navbar />
             </div>

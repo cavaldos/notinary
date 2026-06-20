@@ -56,6 +56,7 @@ const GameSelectPage: React.FC = () => {
     const [gameFinished, setGameFinished] = useState(false);
     const [wrongWords, setWrongWords] = useState<DictionaryItem[]>([]);
     const [questionCount, setQuestionCount] = useState(20);
+    const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
     const [gameMode, setGameMode] = useState<'vi-en' | 'en-vi'>('vi-en');
     const [answersRevealed, setAnswersRevealed] = useState(false);
     const [autoHideAnswers, setAutoHideAnswers] = useState(true);
@@ -92,10 +93,28 @@ const GameSelectPage: React.FC = () => {
         return map;
     }, [dictionary]);
 
+    const UNTAGGED = '__untagged__';
+
+    const levelOptions = useMemo(() => {
+        const levels = new Set(dictionary.map(item => item.Level).filter(Boolean));
+        return Array.from(levels).sort();
+    }, [dictionary]);
+
+    const hasUntaggedItems = useMemo(() => {
+        return dictionary.some(item => !item.Level);
+    }, [dictionary]);
+
     const filteredItems = useMemo(() => {
-        if (typeFilter === 'all') return dictionary;
-        return itemsByType.get(typeFilter) ?? [];
-    }, [dictionary, itemsByType, typeFilter]);
+        let items = typeFilter === 'all' ? dictionary : itemsByType.get(typeFilter) ?? [];
+        if (selectedLevels.length > 0) {
+            items = items.filter(item => {
+                const matchesUntagged = selectedLevels.includes(UNTAGGED) && !item.Level;
+                const matchesLevel = selectedLevels.includes(item.Level);
+                return matchesUntagged || matchesLevel;
+            });
+        }
+        return items;
+    }, [dictionary, itemsByType, typeFilter, selectedLevels]);
 
     const shuffleArray = <T,>(arr: T[]): T[] => {
         const a = [...arr];
@@ -239,17 +258,17 @@ const GameSelectPage: React.FC = () => {
 
     if (!gameStarted) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen p-6 pb-24">
-                <h1 className="text-3xl font-bold text-gray-900 mb-6">Game</h1>
+            <div className="flex flex-col items-center justify-center flex-1 overflow-y-auto overscroll-y-contain p-6 pb-30 ">
+                <h1 className="text-3xl font-bold text-gray-900 mb-3">Game</h1>
 
-            <div className="mb-4 w-full max-w-xs">
+            <div className="mb-3 w-full max-w-xs">
                 <label className="block text-gray-600 mb-2 text-sm font-medium">Space</label>
                     <div className="flex gap-2">
                         {spaceOptions.map(s => (
                             <button
                                 key={s}
                                 onClick={() => setSpace(s)}
-                                className={`flex-1 py-2 px-4 rounded-xl font-medium transition-all ${space === s ? 'bg-white shadow-md font-bold text-gray-900' : 'bg-beige text-gray-600'}`}
+                                className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-medium transition-all ${space === s ? 'bg-white shadow-md font-bold text-gray-900' : 'bg-beige text-gray-600'}`}
                             >
                                 {s}
                             </button>
@@ -257,14 +276,57 @@ const GameSelectPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="mb-6 w-full max-w-xs">
+                {(levelOptions.length > 0 || hasUntaggedItems) && (
+                <div className="mb-3 w-full max-w-xs">
+                    <label className="block text-gray-600 mb-2 text-sm font-medium">Level</label>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                        <button
+                            onClick={() => setSelectedLevels([])}
+                            className={`py-1.5 px-3 rounded-xl text-xs font-medium transition-all ${selectedLevels.length === 0 ? 'bg-white shadow-md font-bold text-gray-900' : 'bg-beige text-gray-600'}`}
+                        >
+                            All
+                        </button>
+                        {hasUntaggedItems && (
+                            <button
+                                onClick={() => {
+                                    setSelectedLevels(prev =>
+                                        prev.includes(UNTAGGED)
+                                            ? prev.filter(l => l !== UNTAGGED)
+                                            : [...prev, UNTAGGED]
+                                    );
+                                }}
+                                className={`py-1.5 px-3 rounded-xl text-xs font-medium transition-all ${selectedLevels.includes(UNTAGGED) ? 'bg-white shadow-md font-bold text-gray-900' : 'bg-beige text-gray-600'}`}
+                            >
+                                No level
+                            </button>
+                        )}
+                        {levelOptions.map(level => (
+                            <button
+                                key={level}
+                                onClick={() => {
+                                    setSelectedLevels(prev =>
+                                        prev.includes(level)
+                                            ? prev.filter(l => l !== level)
+                                            : [...prev, level]
+                                    );
+                                }}
+                                className={`py-1.5 px-3 rounded-xl text-xs font-medium transition-all ${selectedLevels.includes(level) ? 'bg-white shadow-md font-bold text-gray-900' : 'bg-beige text-gray-600'}`}
+                            >
+                                {level}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                )}
+
+                <div className="mb-3 w-full max-w-xs">
                     <label className="block text-gray-600 mb-2 text-sm font-medium">Type</label>
                     <div className="flex flex-wrap gap-2 justify-center">
                         {typeOptions.map(t => (
                             <button
                                 key={t}
                                 onClick={() => setTypeFilter(t)}
-                                className={`py-2 px-4 rounded-xl font-medium transition-all ${typeFilter === t ? 'bg-white shadow-md font-bold text-gray-900' : 'bg-beige text-gray-600'}`}
+                                className={`py-1.5 px-3 rounded-xl text-xs font-medium transition-all ${typeFilter === t ? 'bg-white shadow-md font-bold text-gray-900' : 'bg-beige text-gray-600'}`}
                             >
                                 {typeDisplayLabels[t]}
                             </button>
@@ -275,7 +337,7 @@ const GameSelectPage: React.FC = () => {
                     </p>
                 </div>
 
-                <div className="mb-6 w-full max-w-xs">
+                <div className="mb-1 w-full max-w-xs">
                     <label className="block text-gray-600 dark:text-gray-400 mb-2 text-sm font-medium">
                         Questions: <span className="font-bold text-gray-600 dark:text-gray-400">{questionCount}</span>
                     </label>
@@ -301,9 +363,9 @@ const GameSelectPage: React.FC = () => {
                             title={gameMode === 'vi-en' ? 'Show meaning, pick the word' : 'Show word, pick the meaning'}
                             className="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center hover:shadow-md transition-all active:scale-95"
                         >
-                            <ArrowRight
-                                className={`w-4 h-4 text-gray-600 transition-transform duration-300 ${gameMode === 'en-vi' ? 'rotate-180' : ''}`}
-                            />
+                                                            <ArrowRight
+                                                                className={`w-3.5 h-3.5 text-gray-600 transition-transform duration-300 ${gameMode === 'en-vi' ? 'rotate-180' : ''}`}
+                                                            />
                         </button>
                     </div>
                     <div className="flex-1 flex flex-col items-center gap-1">
@@ -318,9 +380,9 @@ const GameSelectPage: React.FC = () => {
                             }`}
                         >
                             {autoHideAnswers ? (
-                                <EyeOff className="w-4 h-4 text-gray-600" />
+                                <EyeOff className="w-3.5 h-3.5 text-gray-600" />
                             ) : (
-                                <Eye className="w-4 h-4 text-gray-400" />
+                                <Eye className="w-3.5 h-3.5 text-gray-400" />
                             )}
                         </button>
                     </div>
@@ -339,7 +401,7 @@ const GameSelectPage: React.FC = () => {
 
     if (gameFinished) {
         return (
-            <div className="flex flex-col items-center min-h-screen p-6 pb-24">
+            <div className="flex flex-col items-center flex-1 overflow-y-auto overscroll-y-contain p-6 pb-24">
                 <h1 className="text-3xl font-bold text-gray-900 mb-3 mt-6">Game Over</h1>
                 <div className="text-6xl font-bold text-gray-900 mb-1">
                     {score} / {questions.length}
@@ -422,7 +484,7 @@ const GameSelectPage: React.FC = () => {
     if (!currentQuestion) return null;
 
     return (
-        <div className="flex flex-col items-center min-h-screen p-6 pb-24">
+        <div className="flex flex-col items-center flex-1 overflow-y-auto overscroll-y-contain p-6 pb-24">
             {/* Progress bar */}
             <div className="w-full max-w-md mb-4">
                 <div className="flex justify-between text-gray-400 text-xs mb-1.5">
