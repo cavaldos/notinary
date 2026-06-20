@@ -11,6 +11,7 @@ export interface SavedGameData {
     currentQ: number;
     score: number;
     wrongWords: DictionaryItem[];
+    skippedWords: DictionaryItem[];
     gameMode: 'vi-en' | 'en-vi';
     questionCount: number;
     space: string;

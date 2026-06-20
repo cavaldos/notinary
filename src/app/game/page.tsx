@@ -62,6 +62,7 @@ const GameSelectPage: React.FC = () => {
     const [showResult, setShowResult] = useState(false);
     const [gameFinished, setGameFinished] = useState(false);
     const [wrongWords, setWrongWords] = useState<DictionaryItem[]>([]);
+    const [skippedWords, setSkippedWords] = useState<DictionaryItem[]>([]);
     const [questionCount, setQuestionCount] = useState(20);
     const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
     const [gameMode, setGameMode] = useState<'vi-en' | 'en-vi'>('vi-en');
@@ -88,6 +89,7 @@ const GameSelectPage: React.FC = () => {
         setCurrentQ(savedGame.currentQ);
         setScore(savedGame.score);
         setWrongWords(savedGame.wrongWords);
+        setSkippedWords(savedGame.skippedWords ?? []);
         setGameMode(savedGame.gameMode);
         setQuestionCount(savedGame.questionCount);
         setSpace(savedGame.space);
@@ -111,6 +113,7 @@ const GameSelectPage: React.FC = () => {
             currentQ,
             score,
             wrongWords,
+            skippedWords,
             gameMode,
             questionCount,
             space,
@@ -120,7 +123,7 @@ const GameSelectPage: React.FC = () => {
         };
         dispatch(saveGame(data));
     }, [
-        gameStarted, gameFinished, questions, currentQ, score, wrongWords,
+        gameStarted, gameFinished, questions, currentQ, score, wrongWords, skippedWords,
         gameMode, questionCount, space, typeFilter, selectedLevels, autoHideAnswers, dispatch,
     ]);
 
@@ -211,6 +214,7 @@ const GameSelectPage: React.FC = () => {
         setCurrentQ(0);
         setScore(0);
         setWrongWords([]);
+        setSkippedWords([]);
         setSelectedAnswer(null);
         setShowResult(false);
         setGameFinished(false);
@@ -229,6 +233,12 @@ const GameSelectPage: React.FC = () => {
         }
     };
 
+    const handleSkip = () => {
+        if (showResult) return;
+        setSkippedWords(prev => [...prev, questions[currentQ].correctWord]);
+        handleNext();
+    };
+
     const handleNext = () => {
         if (currentQ + 1 < questions.length) {
             setCurrentQ(prev => prev + 1);
@@ -245,6 +255,7 @@ const GameSelectPage: React.FC = () => {
         setCurrentQ(0);
         setScore(0);
         setWrongWords([]);
+        setSkippedWords([]);
         setSelectedAnswer(null);
         setShowResult(false);
         setGameFinished(false);
@@ -252,9 +263,10 @@ const GameSelectPage: React.FC = () => {
     };
 
     const replayMistakes = useCallback(() => {
-        if (wrongWords.length === 0) return;
+        const wordsToReview = [...wrongWords, ...skippedWords];
+        if (wordsToReview.length === 0) return;
 
-        const shuffled = shuffleArray(wrongWords);
+        const shuffled = shuffleArray(wordsToReview);
         const totalQuestions = Math.min(shuffled.length, questionCount);
         const selectedWords = shuffled.slice(0, totalQuestions);
 
@@ -281,12 +293,13 @@ const GameSelectPage: React.FC = () => {
         setCurrentQ(0);
         setScore(0);
         setWrongWords([]);
+        setSkippedWords([]);
         setSelectedAnswer(null);
         setShowResult(false);
         setGameFinished(false);
         setAnswersRevealed(false);
         setGameStarted(true);
-    }, [wrongWords, dictionary, itemsByType, questionCount]);
+    }, [wrongWords, skippedWords, dictionary, itemsByType, questionCount]);
 
     const resetGame = () => {
         dispatch(clearSavedGame());
@@ -298,6 +311,7 @@ const GameSelectPage: React.FC = () => {
         setShowResult(false);
         setScore(0);
         setWrongWords([]);
+        setSkippedWords([]);
         setAnswersRevealed(false);
         setShowSettings(false);
     };
@@ -326,7 +340,7 @@ const GameSelectPage: React.FC = () => {
         if (savedGame && !showSettings) {
             return (
                 <div className="flex flex-col items-center justify-center flex-1 overflow-y-auto overscroll-y-contain p-6 pb-30 ">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Game</h1>
+                    {/* <h1 className="text-3xl font-bold text-gray-900 mb-2">Game</h1> */}
                     <p className="text-gray-500 text-sm mb-6">You have a saved game in progress</p>
 
                     <div className="bg-white rounded-2xl shadow-sm p-6 w-full max-w-xs mb-6 text-center">
@@ -356,6 +370,9 @@ const GameSelectPage: React.FC = () => {
 
                         {savedGame.wrongWords.length > 0 && (
                             <p className="text-xs text-amber-600">{savedGame.wrongWords.length} mistakes so far</p>
+                        )}
+                        {savedGame.skippedWords && savedGame.skippedWords.length > 0 && (
+                            <p className="text-xs text-gray-400">{savedGame.skippedWords.length} skipped</p>
                         )}
                     </div>
 
@@ -546,12 +563,12 @@ const GameSelectPage: React.FC = () => {
                     >
                         <RotateCcw className="w-3.5 h-3.5" /> Play Again
                     </button>
-                    {wrongWords.length > 0 && (
+                    {(wrongWords.length > 0 || skippedWords.length > 0) && (
                         <button
                             onClick={replayMistakes}
                             className="inline-flex items-center gap-2 bg-amber-100 text-amber-800 py-2.5 px-5 rounded-xl font-semibold text-sm hover:bg-amber-200 transition-colors"
                         >
-                            <RotateCcw className="w-3.5 h-3.5" /> Replay Mistakes ({wrongWords.length})
+                            <RotateCcw className="w-3.5 h-3.5" /> Review ({wrongWords.length + skippedWords.length})
                         </button>
                     )}
                     <button
@@ -562,10 +579,44 @@ const GameSelectPage: React.FC = () => {
                     </button>
                 </div>
 
+                {skippedWords.length > 0 && (
+                    <div className="w-full max-w-md mb-8">
+                        <h2 className="text-base font-semibold text-gray-700 mb-2 text-center">
+                            Skipped words ({skippedWords.length})
+                        </h2>
+                        <div className="space-y-1.5">
+                            {skippedWords.map((word, i) => (
+                                <div
+                                    key={i}
+                                    className="flex items-center bg-white rounded-xl px-3 py-2.5 shadow-sm gap-2 text-sm"
+                                >
+                                    <div className="flex items-center gap-2 shrink-0 min-w-0">
+                                        <span className="text-gray-400 font-bold shrink-0">&#8614;</span>
+                                        <span className="font-semibold text-gray-900 truncate">{word.Word}</span>
+                                        {word.Type && (
+                                            <span className="text-xs text-purple-500 bg-purple-50 px-1.5 py-0.5 rounded shrink-0">
+                                                {word.Type}
+                                            </span>
+                                        )}
+                                        {word.Genre && (
+                                            <span className="text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded shrink-0">
+                                                {word.Genre}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className="text-gray-500 text-sm text-right ml-auto min-w-0 truncate">
+                                        {word.Meaning}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {wrongWords.length > 0 && (
                     <div className="w-full max-w-md mb-8">
                         <h2 className="text-base font-semibold text-gray-700 mb-2 text-center">
-                            Words to review ({wrongWords.length})
+                            Mistakes ({wrongWords.length})
                         </h2>
                         <div className="space-y-1.5">
                             {wrongWords.map((word, i) => (
@@ -596,8 +647,11 @@ const GameSelectPage: React.FC = () => {
                     </div>
                 )}
 
-                {wrongWords.length === 0 && (
+                {wrongWords.length === 0 && skippedWords.length === 0 && (
                     <p className="text-green-600 font-medium">No mistakes — you nailed it!</p>
+                )}
+                {wrongWords.length === 0 && skippedWords.length > 0 && (
+                    <p className="text-gray-500 text-sm">No mistakes, but {skippedWords.length} word{skippedWords.length > 1 ? 's were' : ' was'} skipped</p>
                 )}
             </div>
         );
@@ -633,8 +687,11 @@ const GameSelectPage: React.FC = () => {
                 style={{ touchAction: 'pan-x' }}
             >
                 {/* Question card */}
-                <div className="bg-white rounded-2xl shadow-sm p-5 w-full max-w-md mb-2 text-center">
-                    <p className="text-gray-900 text-xl font-semibold leading-relaxed mb-3">
+                <div className="bg-white rounded-2xl shadow-sm p-2 w-full max-w-md mb-2 text-center">
+                    <p
+                        className="text-gray-900 text-xl font-semibold leading-relaxed mb-3 line-clamp-2"
+                        title={gameMode === 'vi-en' ? currentQuestion.correctWord.Meaning : currentQuestion.correctWord.Word}
+                    >
                         {gameMode === 'vi-en' ? currentQuestion.correctWord.Meaning : currentQuestion.correctWord.Word}
                     </p>
 
@@ -756,12 +813,25 @@ const GameSelectPage: React.FC = () => {
                     })}
                 </div>
 
+                {/* Skip button — only show before answering */}
+                {!showResult && (
+                    <div className="mt-5 w-full max-w-md flex justify-center">
+                        <button
+                            onClick={handleSkip}
+                            className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 transition-colors active:scale-95"
+                        >
+                            <span className="text-lg leading-none">&#8614;</span>
+                            Skip this word
+                        </button>
+                    </div>
+                )}
+
                 {/* Next button + swipe hint */}
                 {showResult && (
                     <div className="mt-5 flex flex-col items-center gap-2">
                         <button
                             onClick={handleNext}
-                            className="bg-white shadow-md text-gray-900 py-2.5 px-8 rounded-xl font-bold transition-colors hover:shadow-lg active:scale-95"
+                            className="bg-white shadow-md text-gray-900 py-1.5 px-4 sm:py-2.5 sm:px-8 rounded-xl font-bold text-sm transition-colors hover:shadow-lg active:scale-95"
                         >
                             {currentQ + 1 < questions.length ? 'Next →' : 'See Results'}
                         </button>
