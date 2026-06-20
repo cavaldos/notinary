@@ -3,8 +3,12 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useDictionary } from '@/hooks/useDictionary';
 import type { DictionaryItem } from '@/redux/features/dictionarySlice';
-import { RotateCcw, ArrowUp, Volume2, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { RotateCcw, ArrowUp, Volume2, ArrowRight, Eye, EyeOff, Play, Trash2 } from 'lucide-react';
 import useTextToSpeech from '@/hooks/useTextToSpeech';
+import { useDispatch, useSelector } from 'react-redux';
+import type { RootState, AppDispatch } from '@/redux/store';
+import { saveGame, clearSavedGame } from '@/redux/features/gameSlice';
+import type { SavedGameData } from '@/redux/features/gameSlice';
 
 type Question = {
     correctWord: DictionaryItem;
@@ -44,6 +48,9 @@ const typeDisplayLabels: Record<string, string> = {
 
 const GameSelectPage: React.FC = () => {
     const { fetchData, dictionary, loading } = useDictionary();
+    const dispatch = useDispatch<AppDispatch>();
+    const savedGame = useSelector((state: RootState) => state.game.savedGame);
+    const restoringRef = useRef(false);
 
     const [space, setSpace] = useState('L2');
     const [typeFilter, setTypeFilter] = useState('all');
@@ -60,6 +67,7 @@ const GameSelectPage: React.FC = () => {
     const [gameMode, setGameMode] = useState<'vi-en' | 'en-vi'>('vi-en');
     const [answersRevealed, setAnswersRevealed] = useState(false);
     const [autoHideAnswers, setAutoHideAnswers] = useState(true);
+    const [showSettings, setShowSettings] = useState(false);
 
     const { speak, stop } = useTextToSpeech();
 
@@ -71,6 +79,50 @@ const GameSelectPage: React.FC = () => {
     useEffect(() => {
         return () => stop();
     }, [stop]);
+
+    // Restore game from saved state
+    const restoreSavedGame = useCallback(() => {
+        if (!savedGame) return;
+        restoringRef.current = true;
+        setQuestions(savedGame.questions);
+        setCurrentQ(savedGame.currentQ);
+        setScore(savedGame.score);
+        setWrongWords(savedGame.wrongWords);
+        setGameMode(savedGame.gameMode);
+        setQuestionCount(savedGame.questionCount);
+        setSpace(savedGame.space);
+        setTypeFilter(savedGame.typeFilter);
+        setSelectedLevels(savedGame.selectedLevels);
+        setAutoHideAnswers(savedGame.autoHideAnswers);
+        setSelectedAnswer(null);
+        setShowResult(false);
+        setGameFinished(false);
+        setAnswersRevealed(false);
+        setGameStarted(true);
+        // Reset restoring flag after state settles
+        setTimeout(() => { restoringRef.current = false; }, 100);
+    }, [savedGame]);
+
+    // Auto-save game state to Redux Persist on every change
+    useEffect(() => {
+        if (!gameStarted || gameFinished || restoringRef.current) return;
+        const data: SavedGameData = {
+            questions,
+            currentQ,
+            score,
+            wrongWords,
+            gameMode,
+            questionCount,
+            space,
+            typeFilter,
+            selectedLevels,
+            autoHideAnswers,
+        };
+        dispatch(saveGame(data));
+    }, [
+        gameStarted, gameFinished, questions, currentQ, score, wrongWords,
+        gameMode, questionCount, space, typeFilter, selectedLevels, autoHideAnswers, dispatch,
+    ]);
 
     // Swipe gesture refs
     const swipeStartY = useRef(0);
@@ -128,6 +180,9 @@ const GameSelectPage: React.FC = () => {
     const generateQuestions = useCallback(() => {
         if (filteredItems.length < 4) return;
 
+        // Clear any saved game when starting fresh
+        dispatch(clearSavedGame());
+
         const shuffled = shuffleArray(filteredItems);
         const totalQuestions = Math.min(shuffled.length, questionCount);
         const selectedWords = shuffled.slice(0, totalQuestions);
@@ -161,7 +216,7 @@ const GameSelectPage: React.FC = () => {
         setGameFinished(false);
         setAnswersRevealed(false);
         setGameStarted(true);
-    }, [filteredItems, dictionary, itemsByType, questionCount]);
+    }, [filteredItems, dictionary, itemsByType, questionCount, dispatch]);
 
     const handleSelectAnswer = (word: string) => {
         if (showResult) return;
@@ -186,6 +241,7 @@ const GameSelectPage: React.FC = () => {
     };
 
     const replayGame = () => {
+        dispatch(clearSavedGame());
         setCurrentQ(0);
         setScore(0);
         setWrongWords([]);
@@ -233,6 +289,7 @@ const GameSelectPage: React.FC = () => {
     }, [wrongWords, dictionary, itemsByType, questionCount]);
 
     const resetGame = () => {
+        dispatch(clearSavedGame());
         setGameStarted(false);
         setGameFinished(false);
         setQuestions([]);
@@ -242,6 +299,7 @@ const GameSelectPage: React.FC = () => {
         setScore(0);
         setWrongWords([]);
         setAnswersRevealed(false);
+        setShowSettings(false);
     };
 
     // Swipe gesture: only active after selecting an answer
@@ -256,7 +314,72 @@ const GameSelectPage: React.FC = () => {
         if (deltaY > 40) handleNext();
     }, [showResult, handleNext]);
 
+    // Clear saved game when finished so the resume dialog won't show on next visit
+    useEffect(() => {
+        if (gameFinished && savedGame) {
+            dispatch(clearSavedGame());
+        }
+    }, [gameFinished]); // eslint-disable-line react-hooks/exhaustive-deps
+
     if (!gameStarted) {
+        // Show resume dialog if there is a saved game
+        if (savedGame && !showSettings) {
+            return (
+                <div className="flex flex-col items-center justify-center flex-1 overflow-y-auto overscroll-y-contain p-6 pb-30 ">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Game</h1>
+                    <p className="text-gray-500 text-sm mb-6">You have a saved game in progress</p>
+
+                    <div className="bg-white rounded-2xl shadow-sm p-6 w-full max-w-xs mb-6 text-center">
+                        <p className="text-4xl font-bold text-gray-900 mb-1">
+                            {savedGame.score} / {savedGame.questions.length}
+                        </p>
+                        <p className="text-gray-400 text-xs mb-4">Current score</p>
+
+                        <div className="flex items-center justify-center gap-4 text-sm text-gray-500 mb-4">
+                            <div className="flex items-center gap-1">
+                                <span className="font-semibold text-gray-800">{savedGame.currentQ + 1}</span>
+                                <span className="text-gray-400">/ {savedGame.questions.length} questions</span>
+                            </div>
+                            <span className="text-gray-300">|</span>
+                            <div className="flex items-center gap-1">
+                                <span className="font-semibold text-gray-800 capitalize">{savedGame.gameMode === 'vi-en' ? 'VI→EN' : 'EN→VI'}</span>
+                            </div>
+                        </div>
+
+                        {/* Mini progress bar */}
+                        <div className="w-full bg-beige rounded-full h-1.5 mb-4">
+                            <div
+                                className="bg-gray-400 h-1.5 rounded-full transition-all"
+                                style={{ width: `${((savedGame.currentQ + 1) / savedGame.questions.length) * 100}%` }}
+                            />
+                        </div>
+
+                        {savedGame.wrongWords.length > 0 && (
+                            <p className="text-xs text-amber-600">{savedGame.wrongWords.length} mistakes so far</p>
+                        )}
+                    </div>
+
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => {
+                                dispatch(clearSavedGame());
+                                setShowSettings(true);
+                            }}
+                            className="inline-flex items-center gap-2 bg-white shadow-sm text-gray-700 py-2.5 px-5 rounded-xl font-semibold text-sm hover:shadow-md transition-all"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" /> New Game
+                        </button>
+                        <button
+                            onClick={restoreSavedGame}
+                            className="inline-flex items-center gap-2 bg-white shadow-sm text-gray-700 py-2.5 px-5 rounded-xl font-semibold text-sm hover:shadow-md transition-all"
+                        >
+                            <Play className="w-3.5 h-3.5" /> Continue Game
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
         return (
             <div className="flex flex-col items-center justify-center flex-1 overflow-y-auto overscroll-y-contain p-6 pb-30 ">
                 <h1 className="text-3xl font-bold text-gray-900 mb-3">Game</h1>
@@ -510,7 +633,7 @@ const GameSelectPage: React.FC = () => {
                 style={{ touchAction: 'pan-x' }}
             >
                 {/* Question card */}
-                <div className="bg-white rounded-2xl shadow-sm p-5 w-full max-w-md mb-4 text-center">
+                <div className="bg-white rounded-2xl shadow-sm p-5 w-full max-w-md mb-2 text-center">
                     <p className="text-gray-900 text-xl font-semibold leading-relaxed mb-3">
                         {gameMode === 'vi-en' ? currentQuestion.correctWord.Meaning : currentQuestion.correctWord.Word}
                     </p>
@@ -551,8 +674,8 @@ const GameSelectPage: React.FC = () => {
                 </div>
 
                 {/* Eye toggle — show/hide answers */}
-                {!showResult && autoHideAnswers && (
-                    <div className="w-full max-w-md mb-3 flex justify-center">
+                {autoHideAnswers && (
+                    <div className="w-full max-w-md mb-2 flex justify-center">
                         <button
                             onClick={() => setAnswersRevealed(prev => !prev)}
                             className="inline-flex items-center gap-2 text-xs font-medium text-gray-500 hover:text-gray-800 transition-colors"
@@ -578,9 +701,9 @@ const GameSelectPage: React.FC = () => {
                         let btnStyle = 'bg-white hover:shadow-md';
                         if (showResult) {
                             if (option.Word === currentQuestion.correctWord.Word) {
-                                btnStyle = 'bg-green-50 text-green-800 border border-green-200';
+                                btnStyle = 'bg-green-50 text-green-800';
                             } else if (option.Word === selectedAnswer) {
-                                btnStyle = 'bg-red-50 text-red-800 border border-red-200';
+                                btnStyle = 'bg-red-50 text-red-800';
                             } else {
                                 btnStyle = 'bg-white opacity-60';
                             }

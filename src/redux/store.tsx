@@ -1,6 +1,7 @@
 import countSlice from './features/countSlice';
 import settingSlice from './features/settingSlice';
 import dictionarySlice from './features/dictionarySlice';
+import gameSlice from './features/gameSlice';
 
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import {
@@ -25,12 +26,13 @@ const persistConfig = {
     key: 'root',
     version: 1,
     storage,
-    whitelist: ['count', 'setting', 'dictionary'],
+    whitelist: ['count', 'setting', 'dictionary', 'game'],
     };
 const rootReducer = combineReducers({
     count: countSlice,
     setting: settingSlice,
     dictionary: dictionarySlice,
+    game: gameSlice,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
