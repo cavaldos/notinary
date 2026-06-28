@@ -1,31 +1,64 @@
 'use client'
 import React, { useState, useRef, useEffect, useCallback, use } from 'react';
-
+import { useDispatch, useSelector } from 'react-redux';
 
 import Card from '@/components/cardspace';
 import { useDictionary } from '@/hooks/useDictionary';
+import { saveScrollPosition } from '@/redux/features/scrollSlice';
+import type { RootState } from '@/redux/store';
 
 const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
     const { fetchData, dictionary } = useDictionary();
+    const dispatch = useDispatch();
     const { space } = use(params);
 
-    const [currentIndex, setCurrentIndex] = useState(0);
+    const savedIndex = useSelector(
+        (state: RootState) => state.scroll.positions[space] ?? 0,
+    );
+
+    const [currentIndex, setCurrentIndex] = useState(savedIndex);
     const containerRef = useRef<HTMLDivElement>(null);
     const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const hasRestored = useRef(false);
 
     useEffect(() => {
         fetchData(space);
     }, [fetchData, space]);
 
-    // Scroll to specific card with smooth animation
-    const scrollToCard = useCallback((index: number) => {
-        if (cardRefs.current[index]) {
-            cardRefs.current[index]?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
+    // Scroll to specific card
+    const scrollToCard = useCallback(
+        (index: number, behavior: ScrollBehavior = 'smooth') => {
+            if (cardRefs.current[index]) {
+                cardRefs.current[index]?.scrollIntoView({
+                    behavior,
+                    block: 'center',
+                });
+            }
+        },
+        [],
+    );
+
+    // ── Khôi phục vị trí cuộn khi data đã load và card được render ──
+    useEffect(() => {
+        if (
+            dictionary.length > 0 &&
+            savedIndex > 0 &&
+            !hasRestored.current &&
+            cardRefs.current[savedIndex]
+        ) {
+            hasRestored.current = true;
+            // Dùng timeout nhỏ để đảm bảo DOM đã render xong
+            requestAnimationFrame(() => {
+                scrollToCard(savedIndex, 'auto');
             });
         }
-    }, []);
+    }, [dictionary.length, savedIndex, scrollToCard]);
+
+    // Reset flag khi đổi space
+    useEffect(() => {
+        hasRestored.current = false;
+    }, [space]);
+
     // Handle scroll event with snap effect
     useEffect(() => {
         const container = containerRef.current;
@@ -58,6 +91,8 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
 
                 if (closestIndex !== currentIndex) {
                     setCurrentIndex(closestIndex);
+                    // Lưu index vào Redux để khi quay lại vẫn nhớ
+                    dispatch(saveScrollPosition({ space, index: closestIndex }));
                     scrollToCard(closestIndex);
                 }
             }, 150);
@@ -68,17 +103,10 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
             container.removeEventListener('scroll', handleScroll);
             clearTimeout(timeoutId);
         };
-    }, [currentIndex, scrollToCard]);
+    }, [currentIndex, scrollToCard, dispatch, space]);
 
     return (
         <div className="flex flex-col h-screen mb-[20px] w-full max-w-full">
-            {/* <div className='fixed top-0 left-0 right-0 z-50 bg-beige mx-auto max-w-[60%] 
-                      mt-[30px] py-[5px] px-[10px] p-2 rounded-full text-center text-shadow-grey-dark font-bold'>
-                Dynamic Island ({currentIndex + 1}/{dictionary.length})
-            </div> */}
-
-
-
             <div
                 ref={containerRef}
                 className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth px-8 py-12"
@@ -87,7 +115,9 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
                 {dictionary.map((item, index) => (
                     <div
                         key={index}
-                        ref={(el) => { cardRefs.current[index] = el; }}
+                        ref={(el) => {
+                            cardRefs.current[index] = el;
+                        }}
                         className="min-h-screen w-full flex items-center justify-center"
                         style={{ scrollSnapAlign: 'center' }}
                     >

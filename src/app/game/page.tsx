@@ -687,7 +687,7 @@ const GameSelectPage: React.FC = () => {
                 style={{ touchAction: 'pan-x' }}
             >
                 {/* Question card */}
-                <div className="bg-white rounded-2xl shadow-sm p-2 w-full max-w-md mb-2 text-center">
+                <div className="bg-white rounded-2xl shadow-sm p-2 w-full max-w-md mb-2 text-center ">
                     <p
                         className="text-gray-900 text-xl font-semibold leading-relaxed mb-3 line-clamp-2"
                         title={gameMode === 'vi-en' ? currentQuestion.correctWord.Meaning : currentQuestion.correctWord.Word}
