@@ -29,7 +29,7 @@ const Navbar: React.FC = () => {
         }
     }
 
-    if (pathname === '/') return null
+    if (pathname === '/' || pathname === '/export') return null
 
     return (
         <>
