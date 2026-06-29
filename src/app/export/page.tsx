@@ -218,11 +218,36 @@ const ExportPage: React.FC = () => {
                             </button>
                         </div>
 
-                        {/* Kết quả export */}
+                        {/* Kết quả export — hover để xem nghĩa */}
                         <div className="bg-white rounded-xl shadow-sm p-4
                                         text-sm text-gray-700 leading-relaxed
-                                        break-words whitespace-pre-wrap">
-                            {exportText}
+                                        break-words">
+                            {filteredWords.map((item, index) => (
+                                <React.Fragment key={item.id || index}>
+                                    <span className="group relative inline-flex cursor-pointer">
+                                        <span className="border-b border-dotted border-gray-300 hover:border-gray-500 transition-colors">
+                                            {item.Word}
+                                        </span>
+                                        {/* Tooltip hiện nghĩa khi hover */}
+                                        <span className="invisible group-hover:visible opacity-0 group-hover:opacity-100
+                                                       absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5
+                                                       px-2.5 py-1.5 rounded-lg text-xs leading-tight
+                                                       bg-grey-dark text-white shadow-lg
+                                                       whitespace-nowrap max-w-[280px] overflow-hidden text-ellipsis
+                                                       transition-all duration-200 z-10
+                                                       pointer-events-none">
+                                            {item.Meaning}
+                                            {/* Mũi tên */}
+                                            <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0
+                                                           border-l-4 border-r-4 border-t-4
+                                                           border-l-transparent border-r-transparent border-t-grey-dark" />
+                                        </span>
+                                    </span>
+                                    {index < filteredWords.length - 1 && (
+                                        <span className="text-gray-400">, </span>
+                                    )}
+                                </React.Fragment>
+                            ))}
                         </div>
 
                         {/* Thông tin */}
