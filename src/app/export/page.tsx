@@ -50,7 +50,11 @@ const ExportPage: React.FC = () => {
         if (selectedType) {
             words = words.filter((item) => item.Type === selectedType);
         }
-        if (selectedLevel) {
+        if (selectedLevel === '') {
+            // All — không lọc
+        } else if (selectedLevel === '__none__') {
+            words = words.filter((item) => !item.Level);
+        } else {
             words = words.filter((item) => item.Level === selectedLevel);
         }
         return words;
@@ -168,6 +172,16 @@ const ExportPage: React.FC = () => {
                         >
                             All
                         </button>
+                        <button
+                            onClick={() => setSelectedLevel('__none__')}
+                            className={`shrink-0 text-xs font-medium rounded-full px-3 py-1.5 transition-all
+                                ${selectedLevel === '__none__'
+                                    ? 'bg-grey-dark text-white shadow-sm'
+                                    : 'bg-beige/60 text-grey-dark hover:bg-beige'
+                                }`}
+                        >
+                            None
+                        </button>
                         {levels.map((level) => (
                             <button
                                 key={level}
@@ -254,7 +268,7 @@ const ExportPage: React.FC = () => {
                         <div className="mt-2 text-xs text-gray-400 text-center">
                             {filteredWords.length} word{filteredWords.length !== 1 ? 's' : ''}
                             {selectedType ? ` · ${selectedType}` : ''}
-                            {selectedLevel ? ` · Level ${selectedLevel}` : ''}
+                            {selectedLevel === '__none__' ? ' · None' : selectedLevel ? ` · Level ${selectedLevel}` : ''}
                         </div>
                     </div>
                 )}
