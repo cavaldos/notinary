@@ -13,12 +13,21 @@ const WordList: React.FC = () => {
     const [space, setSpace] = useState('L1');
     const [search, setSearch] = useState('');
     const [selectedType, setSelectedType] = useState('');
-    const spaceOptions = ['L1', 'L2', 'L3', 'L4'];
+    const [selectedLevel, setSelectedLevel] = useState('');
+    const spaceOptions = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6'];
 
     const types = useMemo(() => {
         const set = new Set<string>();
         dictionary.forEach((item) => {
             if (item.Type) set.add(item.Type);
+        });
+        return Array.from(set).sort();
+    }, [dictionary]);
+
+    const levels = useMemo(() => {
+        const set = new Set<string>();
+        dictionary.forEach((item) => {
+            if (item.Level) set.add(item.Level);
         });
         return Array.from(set).sort();
     }, [dictionary]);
@@ -40,6 +49,11 @@ const WordList: React.FC = () => {
 
     const filtered = dictionary.filter((item) => {
         if (selectedType && item.Type !== selectedType) return false;
+        if (selectedLevel === '__none__') {
+            if (item.Level) return false;
+        } else if (selectedLevel && item.Level !== selectedLevel) {
+            return false;
+        }
         if (!search.trim()) return true;
         const q = search.toLowerCase();
         return (
@@ -126,6 +140,7 @@ const WordList: React.FC = () => {
                                 setSpace(level);
                                 setSearch('');
                                 setSelectedType('');
+                                setSelectedLevel('');
                             }}
                             className={`shrink-0 text-xs font-bold rounded-full px-3 py-1 transition-all
                                 ${space === level
@@ -138,6 +153,47 @@ const WordList: React.FC = () => {
                     ))}
                 </div>
             </div>
+
+            {/* ── Level filter ── */}
+            {levels.length > 0 && (
+                <div className="px-4 pb-3 max-w-xl mx-auto w-full overflow-x-auto">
+                    <div className="flex gap-1.5">
+                        <button
+                            onClick={() => setSelectedLevel('')}
+                            className={`shrink-0 text-xs font-medium rounded-full px-3 py-1.5 transition-all
+                                ${selectedLevel === ''
+                                    ? 'bg-grey-dark text-white shadow-sm'
+                                    : 'bg-beige/60 text-grey-dark hover:bg-beige'
+                                }`}
+                        >
+                            All
+                        </button>
+                        <button
+                            onClick={() => setSelectedLevel('__none__')}
+                            className={`shrink-0 text-xs font-medium rounded-full px-3 py-1.5 transition-all
+                                ${selectedLevel === '__none__'
+                                    ? 'bg-grey-dark text-white shadow-sm'
+                                    : 'bg-beige/60 text-grey-dark hover:bg-beige'
+                                }`}
+                        >
+                            None
+                        </button>
+                        {levels.map((level) => (
+                            <button
+                                key={level}
+                                onClick={() => setSelectedLevel(level)}
+                                className={`shrink-0 text-xs font-medium rounded-full px-3 py-1.5 transition-all
+                                    ${selectedLevel === level
+                                        ? 'bg-grey-dark text-white shadow-sm'
+                                        : 'bg-beige/60 text-grey-dark hover:bg-beige'
+                                    }`}
+                            >
+                                {level}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* ── Word list ── */}
             <div className="flex-1 overflow-y-auto pb-24">

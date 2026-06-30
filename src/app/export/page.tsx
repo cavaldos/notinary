@@ -13,7 +13,7 @@ const ExportPage: React.FC = () => {
     const [selectedLevel, setSelectedLevel] = useState('');
     const [copied, setCopied] = useState(false);
 
-    const spaceOptions = ['L1', 'L2', 'L3', 'L4', 'L5'];
+    const spaceOptions = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6'];
 
     // Lấy danh sách các Type có trong dictionary
     const types = useMemo(() => {
