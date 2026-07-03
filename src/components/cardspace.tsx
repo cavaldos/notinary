@@ -5,13 +5,14 @@ import { Volume2, ArrowRight, ArrowLeft } from 'lucide-react';
 import NotionService from '@/services/notion.service';
 import { useParams } from 'next/navigation';
 import useTextToSpeech from '@/hooks/useTextToSpeech';
+import { normalizeTypeTags } from '@/lib/type-tags';
 
 interface CardProps {
     index: number;
     idPage: string;
     word: string;
     level: string;
-    type: string;
+    type: string[];
     meaning: string;
     pronunciation: string;
     example?: string;
@@ -21,6 +22,7 @@ interface CardProps {
 
 const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, meaning, pronunciation, example, synonyms = [], genre }) => {
     const showMeaning = true;
+    const typeTags = normalizeTypeTags(type);
     const params = useParams();
     const { space } = params;
 
@@ -80,11 +82,11 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
             <div className="space-y-4">
                 {/* Type, Level và Genre tags */}
                 <div className="flex items-center justify-center gap-2 mb-4">
-                    {type && (
-                        <span className="inline-block bg-[#dcebdd] text-gray-800 px-3 py-1 rounded-md text-sm font-medium">
-                            {type}
+                    {typeTags.map((typeTag) => (
+                        <span key={typeTag} className="inline-block bg-[#dcebdd] text-gray-800 px-3 py-1 rounded-md text-sm font-medium">
+                            {typeTag}
                         </span>
-                    )}
+                    ))}
                     {level && (
                         <span className="inline-block bg-[#fbded9] text-gray-800 px-3 py-1 rounded-md text-sm font-medium">
                             {level}

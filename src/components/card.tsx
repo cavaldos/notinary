@@ -3,10 +3,11 @@
 import React from 'react';
 import { Volume2 } from 'lucide-react';
 import NotionService from '@/services/notion.service';
+import { normalizeTypeTags } from '@/lib/type-tags';
 interface CardProps {
     word: string;
     level: string;
-    type: string;
+    type: string[];
     meaning: string;
     pronunciation: string;
     idPage: string;
@@ -16,6 +17,7 @@ interface CardProps {
 const Card: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pronunciation, example }) => {
 
     const showMeaning = true;
+    const typeTags = normalizeTypeTags(type);
 
     // Hàm phát âm thanh
     const speakWord = () => {
@@ -75,11 +77,11 @@ const Card: React.FC<CardProps> = ({ idPage, word, level, type, meaning, pronunc
             <div className="space-y-4">
                 {/* Type và Level tags */}
                 <div className="flex items-center justify-center gap-2 mb-4">
-                    {type && (
-                        <span className="inline-block bg-[#dcebdd] text-gray-800 px-3 py-1 rounded-md text-sm font-medium">
-                            {type}
+                    {typeTags.map((typeTag) => (
+                        <span key={typeTag} className="inline-block bg-[#dcebdd] text-gray-800 px-3 py-1 rounded-md text-sm font-medium">
+                            {typeTag}
                         </span>
-                    )}
+                    ))}
                     {level && (
                         <span className="inline-block bg-[#fbded9] text-gray-800 px-3 py-1 rounded-md text-sm font-medium">
                             {level}

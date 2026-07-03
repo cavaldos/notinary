@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useDictionary } from '@/hooks/useDictionary';
+import { formatTypeTags, normalizeTypeTags } from '@/lib/type-tags';
 import type { DictionaryItem } from '@/redux/features/dictionarySlice';
 import { RotateCcw, ArrowUp, Volume2, ArrowRight, Eye, EyeOff, Play, Trash2 } from 'lucide-react';
 import useTextToSpeech from '@/hooks/useTextToSpeech';
@@ -29,13 +30,14 @@ const hideWordInExample = (example: string, word: string): React.ReactNode => {
 
 const isFrench = process.env.NEXT_PUBLIC_SPEECH_LANGUAGE?.startsWith('fr') ?? false;
 
-const normalizeType = (type: string | undefined): string => {
-    if (!type || typeof type !== 'string') return '';
+const normalizeType = (type: string): string => {
     const t = type.toLowerCase().trim();
     // French doesn't use "in-verb" — skip normalization
     if (!isFrench && (t === 'verb' || t === 'in-verb')) return 'verb';
     return t;
 };
+
+const getNormalizedTypes = (type: unknown): string[] => normalizeTypeTags(type).map(normalizeType);
 
 const typeDisplayLabels: Record<string, string> = {
     all: isFrench ? 'Tous' : 'All',
@@ -141,9 +143,10 @@ const GameSelectPage: React.FC = () => {
     const itemsByType = useMemo(() => {
         const map = new Map<string, DictionaryItem[]>();
         for (const item of dictionary) {
-            const t = normalizeType(item.Type);
-            if (!map.has(t)) map.set(t, []);
-            map.get(t)!.push(item);
+            for (const type of getNormalizedTypes(item.Type)) {
+                if (!map.has(type)) map.set(type, []);
+                map.get(type)!.push(item);
+            }
         }
         return map;
     }, [dictionary]);
@@ -191,15 +194,15 @@ const GameSelectPage: React.FC = () => {
         const selectedWords = shuffled.slice(0, totalQuestions);
 
         const generatedQuestions: Question[] = selectedWords.map((correctWord) => {
-            const correctType = normalizeType(correctWord.Type);
+            const correctTypes = getNormalizedTypes(correctWord.Type);
 
-            const sameTypePool = (itemsByType.get(correctType) ?? [])
-                .filter(item => item.Word !== correctWord.Word);
+            const sameTypePool = correctTypes.flatMap((type) => itemsByType.get(type) ?? [])
+                .filter((item, index, items) => item.Word !== correctWord.Word && items.findIndex((candidate) => candidate.Word === item.Word) === index);
             let distractorPool = shuffleArray(sameTypePool);
 
             if (distractorPool.length < 3) {
                 const otherTypePool = dictionary.filter(
-                    item => item.Word !== correctWord.Word && normalizeType(item.Type) !== correctType
+                    item => item.Word !== correctWord.Word && !getNormalizedTypes(item.Type).some((type) => correctTypes.includes(type))
                 );
                 distractorPool = [...distractorPool, ...shuffleArray(otherTypePool)];
             }
@@ -271,14 +274,14 @@ const GameSelectPage: React.FC = () => {
         const selectedWords = shuffled.slice(0, totalQuestions);
 
         const generatedQuestions: Question[] = selectedWords.map((correctWord) => {
-            const correctType = normalizeType(correctWord.Type);
-            const sameTypePool = (itemsByType.get(correctType) ?? [])
-                .filter(item => item.Word !== correctWord.Word);
+            const correctTypes = getNormalizedTypes(correctWord.Type);
+            const sameTypePool = correctTypes.flatMap((type) => itemsByType.get(type) ?? [])
+                .filter((item, index, items) => item.Word !== correctWord.Word && items.findIndex((candidate) => candidate.Word === item.Word) === index);
             let distractorPool = shuffleArray(sameTypePool);
 
             if (distractorPool.length < 3) {
                 const otherTypePool = dictionary.filter(
-                    item => item.Word !== correctWord.Word && normalizeType(item.Type) !== correctType
+                    item => item.Word !== correctWord.Word && !getNormalizedTypes(item.Type).some((type) => correctTypes.includes(type))
                 );
                 distractorPool = [...distractorPool, ...shuffleArray(otherTypePool)];
             }
@@ -593,9 +596,9 @@ const GameSelectPage: React.FC = () => {
                                     <div className="flex items-center gap-2 shrink-0 min-w-0">
                                         <span className="text-gray-400 font-bold shrink-0">&#8614;</span>
                                         <span className="font-semibold text-gray-900 truncate">{word.Word}</span>
-                                        {word.Type && (
+                                        {formatTypeTags(word.Type) && (
                                             <span className="text-xs text-purple-500 bg-purple-50 px-1.5 py-0.5 rounded shrink-0">
-                                                {word.Type}
+                                                {formatTypeTags(word.Type)}
                                             </span>
                                         )}
                                         {word.Genre && (
@@ -627,9 +630,9 @@ const GameSelectPage: React.FC = () => {
                                     <div className="flex items-center gap-2 shrink-0 min-w-0">
                                         <span className="text-red-400 font-bold shrink-0">&#10005;</span>
                                         <span className="font-semibold text-gray-900 truncate">{word.Word}</span>
-                                        {word.Type && (
+                                        {formatTypeTags(word.Type) && (
                                             <span className="text-xs text-purple-500 bg-purple-50 px-1.5 py-0.5 rounded shrink-0">
-                                                {word.Type}
+                                                {formatTypeTags(word.Type)}
                                             </span>
                                         )}
                                         {word.Genre && (
@@ -695,18 +698,18 @@ const GameSelectPage: React.FC = () => {
                         {gameMode === 'vi-en' ? currentQuestion.correctWord.Meaning : currentQuestion.correctWord.Word}
                     </p>
 
-                    {(currentQuestion.correctWord.Level || currentQuestion.correctWord.Type || currentQuestion.correctWord.Genre) && (
+                    {(currentQuestion.correctWord.Level || formatTypeTags(currentQuestion.correctWord.Type) || currentQuestion.correctWord.Genre) && (
                         <div className="flex items-center justify-center gap-2 mb-3">
                             {currentQuestion.correctWord.Level && (
                                 <span className="inline-block px-2.5 py-0.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-full">
                                     {currentQuestion.correctWord.Level}
                                 </span>
                             )}
-                            {currentQuestion.correctWord.Type && (
-                                <span className="inline-block px-2.5 py-0.5 bg-purple-50 text-purple-600 text-xs font-medium rounded-full">
-                                    {currentQuestion.correctWord.Type}
+                            {normalizeTypeTags(currentQuestion.correctWord.Type).map((type) => (
+                                <span key={type} className="inline-block px-2.5 py-0.5 bg-purple-50 text-purple-600 text-xs font-medium rounded-full">
+                                    {type}
                                 </span>
-                            )}
+                            ))}
                             {currentQuestion.correctWord.Genre && (
                                 <span className="inline-block px-2.5 py-0.5 bg-amber-50 text-amber-600 text-xs font-medium rounded-full">
                                     {currentQuestion.correctWord.Genre}

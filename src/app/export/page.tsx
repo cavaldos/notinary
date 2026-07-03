@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Copy, Check, Download } from 'lucide-react';
 import { useDictionary } from '@/hooks/useDictionary';
+import { hasTypeTag, normalizeTypeTags } from '@/lib/type-tags';
 
 const ExportPage: React.FC = () => {
     const router = useRouter();
@@ -19,7 +20,7 @@ const ExportPage: React.FC = () => {
     const types = useMemo(() => {
         const set = new Set<string>();
         dictionary.forEach((item) => {
-            if (item.Type) set.add(item.Type);
+            normalizeTypeTags(item.Type).forEach((type) => set.add(type));
         });
         return Array.from(set).sort();
     }, [dictionary]);
@@ -48,7 +49,7 @@ const ExportPage: React.FC = () => {
     const filteredWords = useMemo(() => {
         let words = dictionary;
         if (selectedType) {
-            words = words.filter((item) => item.Type === selectedType);
+            words = words.filter((item) => hasTypeTag(item.Type, selectedType));
         }
         if (selectedLevel === '') {
             // All — không lọc

@@ -64,8 +64,20 @@ export async function withRetry<T>(
     throw new Error('Max retries exceeded');
 }
 
+type NotionPropertyValue = {
+    type: string;
+    title?: Array<{ plain_text?: string }>;
+    rich_text?: Array<{ plain_text?: string }>;
+    select?: { name?: string } | null;
+    multi_select?: Array<{ name?: string }>;
+    number?: number | null;
+    date?: { start?: string } | null;
+    checkbox?: boolean;
+    status?: { name?: string } | null;
+} & Record<string, unknown>;
+
 // Hàm để trích xuất giá trị từ các loại thuộc tính (property) của Notion
-const extractPropertyValue = (property: any): any => {
+const extractPropertyValue = (property: NotionPropertyValue): unknown => {
     switch (property.type) {
         case 'title':
             return property.title?.[0]?.plain_text || '';
@@ -74,7 +86,7 @@ const extractPropertyValue = (property: any): any => {
         case 'select':
             return property.select?.name || '';
         case 'multi_select':
-            return property.multi_select.map((option: any) => option.name) || [];
+            return property.multi_select?.map((option) => option.name).filter((name): name is string => Boolean(name)) || [];
         case 'number':
             return property.number;
         case 'date':

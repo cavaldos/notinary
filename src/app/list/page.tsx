@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft, Search, Volume2 } from 'lucide-react';
 import { useDictionary } from '@/hooks/useDictionary';
 import useTextToSpeech from '@/hooks/useTextToSpeech';
+import { hasTypeTag, normalizeTypeTags } from '@/lib/type-tags';
 
 const WordList: React.FC = () => {
     const router = useRouter();
@@ -19,7 +20,7 @@ const WordList: React.FC = () => {
     const types = useMemo(() => {
         const set = new Set<string>();
         dictionary.forEach((item) => {
-            if (item.Type) set.add(item.Type);
+            normalizeTypeTags(item.Type).forEach((type) => set.add(type));
         });
         return Array.from(set).sort();
     }, [dictionary]);
@@ -48,7 +49,7 @@ const WordList: React.FC = () => {
     }, [fetchData, space]);
 
     const filtered = dictionary.filter((item) => {
-        if (selectedType && item.Type !== selectedType) return false;
+        if (selectedType && !hasTypeTag(item.Type, selectedType)) return false;
         if (selectedLevel === '__none__') {
             if (item.Level) return false;
         } else if (selectedLevel && item.Level !== selectedLevel) {
@@ -229,13 +230,13 @@ const WordList: React.FC = () => {
                                     {item.Word}
                                 </button>
 
-                                {/* Type badge */}
-                                {item.Type && (
-                                    <span className="text-[11px] font-medium text-gray-400 bg-gray-100
+                                {/* Type badges */}
+                                {normalizeTypeTags(item.Type).map((type) => (
+                                    <span key={type} className="text-[11px] font-medium text-gray-400 bg-gray-100
                                                      rounded-md px-1.5 py-0.5 shrink-0 leading-none">
-                                        {item.Type}
+                                        {type}
                                     </span>
-                                )}
+                                ))}
 
                                 {/* Meaning */}
                                 <span className="text-sm text-gray-500 leading-snug truncate min-w-0">

@@ -1,18 +1,20 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import NotionService from '@/services/notion.service';
 import type { RootState } from '@/redux/store';
+import { normalizeTypeTags } from '@/lib/type-tags';
 
 export interface DictionaryItem {
     id: string;
     Word: string;
     Level: string;
-    Type: string;
+    Type: string[];
     Pronounce: string;
     Meaning: string;
     Example?: string;
     Synonyms?: string[];
     Genre?: string;
 }
+
 
 interface DictionarySpaceState {
     total: number;
@@ -56,6 +58,7 @@ const isDictionaryItem = (item: unknown): item is DictionaryItem => {
     }
 
     const value = item as Record<string, unknown>;
+    value.Type = normalizeTypeTags(value.Type);
     return typeof value.Word === 'string' && value.Word.trim() !== '';
 };
 
