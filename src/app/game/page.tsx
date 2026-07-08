@@ -402,7 +402,15 @@ const GameSelectPage: React.FC = () => {
 
         return (
             <div className="flex flex-col items-center justify-center flex-1 overflow-y-auto overscroll-y-contain p-6 pb-30 ">
-                <h1 className="text-3xl font-bold text-gray-900 mb-3">Game</h1>
+                <h1 className="text-3xl font-bold text-gray-900 mb-1">Game</h1>
+                <a
+                    href="/game/repetition"
+                    className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors mb-4"
+                >
+                    <span className="text-gray-300">←</span>
+                    Try Repetition Mode
+                    <span className="text-gray-300">→</span>
+                </a>
 
             <div className="mb-3 w-full max-w-xs">
                 <label className="block text-gray-600 mb-2 text-sm font-medium">Space</label>
