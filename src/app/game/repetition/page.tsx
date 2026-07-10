@@ -365,7 +365,7 @@ const RepetitionPage: React.FC = () => {
   // ══════════════════════════════════════════════
   if (phase === 'settings') {
     return (
-      <div className="flex flex-col h-screen w-full items-center justify-center px-6">
+      <div className="flex flex-col items-center flex-1 overflow-y-auto overscroll-y-contain p-6 pb-30">
         <div className="w-full max-w-md space-y-6">
           <h1 className="text-3xl font-bold text-gray-900">Repetition</h1>
           <p className="text-gray-500 text-sm -mt-4">
@@ -555,7 +555,7 @@ const RepetitionPage: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen mb-[20px] w-full max-w-full select-none">
-      {/* Dynamic island */}
+      {/* Dynamic island — compact & centered like [space] */}
       <div
         ref={dynamicRef}
         onClick={() => setIsExpanded(!isExpanded)}
@@ -568,69 +568,56 @@ const RepetitionPage: React.FC = () => {
           `}
       >
         {!isExpanded ? (
-          <div className="cursor-pointer hover:opacity-80 transition-opacity flex flex-col items-center gap-1">
-            {/* Main row: group + streak + timing */}
-            <div className="flex items-center justify-center gap-2 text-sm">
-              <span className="text-xs text-gray-500">
-                Nhóm {currentGroupIdx + 1}/{sequenceInfo?.totalGroups ?? 0}
-              </span>
-              <span className="text-xs text-gray-300">·</span>
-              <span className="text-xs font-medium">
-                {currentIndex + 1}/{orderedWords.length}
+          <div className="cursor-pointer hover:opacity-80 transition-opacity flex flex-col items-center gap-0.5">
+            {/* Single compact row: word index + settings icon — like [space] */}
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-sm font-bold text-gray-800">
+                #{currentIndex + 1}
+                <span className="text-gray-400 font-normal">/{orderedWords.length}</span>
               </span>
               {inReviewTail && (
-                <>
-                  <span className="text-xs text-gray-300">·</span>
-                  <span className="text-xs font-bold text-red-500">
-                    🔄 Ôn
-                  </span>
-                </>
+                <span className="text-xs font-bold text-red-500">🔄</span>
               )}
-              {avgViewTime > 0 && !inReviewTail && (
-                <>
-                  <span className="text-xs text-gray-300">·</span>
-                  <span className="text-xs text-gray-400">
-                    ~{avgViewTime}ms
-                  </span>
-                </>
-              )}
-              {streak > 0 && (
-                <>
-                  <span className="text-xs text-gray-300">·</span>
-                  <span className="text-xs font-bold text-amber-600">
-                    🔥 {streak}
-                  </span>
-                </>
-              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPhase('settings');
+                }}
+                onMouseEnter={resetTimeout}
+                className="ml-1 p-1 rounded-full hover:bg-beige-strong transition-colors"
+                title="Settings"
+              >
+                <Settings className="w-3 h-3 text-grey-dark" />
+              </button>
             </div>
-            {/* Progress dots for current group */}
-            <div className="flex items-center gap-1">
-              {Array.from({ length: wordsInThisGroup }, (_, i) => {
-                const wordId = orderedWords[presStart + i]?.id;
-                const isSlow = wordId && slowWordIds.has(wordId);
-                const isFast = wordId && fastWordIds.has(wordId);
-                const viewed = i < positionInGroup;
-                let dotColor = 'bg-gray-300';
-                if (viewed && isSlow) dotColor = 'bg-red-400';
-                else if (viewed && isFast) dotColor = 'bg-green-400';
-                else if (viewed) dotColor = 'bg-[#344e41]';
-                return (
-                  <div
-                    key={i}
-                    title={
-                      isSlow ? 'Chậm (cần ôn)' : isFast ? 'Nhanh (dễ)' : ''
-                    }
-                    className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${dotColor} ${
-                      viewed ? 'scale-110' : ''
-                    } ${isSlow && viewed ? 'animate-pulse' : ''}`}
-                  />
-                );
-              })}
-            </div>
+            {/* Progress dots — subtle second row */}
+            {wordsInThisGroup > 1 && (
+              <div className="flex items-center gap-1">
+                {Array.from({ length: wordsInThisGroup }, (_, i) => {
+                  const wordId = orderedWords[presStart + i]?.id;
+                  const isSlow = wordId && slowWordIds.has(wordId);
+                  const isFast = wordId && fastWordIds.has(wordId);
+                  const viewed = i < positionInGroup;
+                  let dotColor = 'bg-gray-300';
+                  if (viewed && isSlow) dotColor = 'bg-red-400';
+                  else if (viewed && isFast) dotColor = 'bg-green-400';
+                  else if (viewed) dotColor = 'bg-[#344e41]';
+                  return (
+                    <div
+                      key={i}
+                      title={isSlow ? 'Chậm' : isFast ? 'Nhanh' : ''}
+                      className={`w-1 h-1 rounded-full transition-all duration-300 ${dotColor} ${
+                        viewed ? 'scale-110' : ''
+                      } ${isSlow && viewed ? 'animate-pulse' : ''}`}
+                    />
+                  );
+                })}
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex items-center justify-center w-full px-2 transition-all duration-300 flex-col gap-1">
-            <div className="text-xs text-gray-500 mb-1">
+            <div className="text-xs text-gray-500">
               Nhóm {currentGroupIdx + 1}/{sequenceInfo?.totalGroups ?? 0}
               {' · '}Lần {displayGroupNum}
               {inReviewTail && <span className="text-red-500 ml-1">· Ôn tập</span>}
@@ -638,23 +625,29 @@ const RepetitionPage: React.FC = () => {
             {avgViewTime > 0 && (
               <div className="text-[10px] text-gray-400">
                 ⏱ TB {(avgViewTime / 1000).toFixed(1)}s
-                {slowWordIds.size > 0 && <span className="ml-2 text-red-400">🐢 {slowWordIds.size} chậm</span>}
-                {fastWordIds.size > 0 && <span className="ml-2 text-green-400">⚡ {fastWordIds.size} nhanh</span>}
+                {slowWordIds.size > 0 && <span className="ml-2 text-red-400">🐢 {slowWordIds.size}</span>}
+                {fastWordIds.size > 0 && <span className="ml-2 text-green-400">⚡ {fastWordIds.size}</span>}
               </div>
             )}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setPhase('settings');
-              }}
-              onMouseEnter={resetTimeout}
-              className="flex items-center gap-1.5 mx-1 px-4 py-1 bg-beige-strong text-grey-dark hover:brightness-105 ease-in-out
-                rounded-full text-sm font-medium transition-all duration-200
-                hover:scale-105 active:scale-95"
-            >
-              <Settings className="w-3.5 h-3.5" />
-              Settings
-            </button>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold text-gray-800">
+                #{currentIndex + 1}
+                <span className="text-gray-400 font-normal">/{orderedWords.length}</span>
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPhase('settings');
+                }}
+                onMouseEnter={resetTimeout}
+                className="flex items-center gap-1 ml-1 px-3 py-1 bg-beige-strong text-grey-dark hover:brightness-105
+                  rounded-full text-xs font-medium transition-all duration-200
+                  hover:scale-105 active:scale-95"
+              >
+                <Settings className="w-3 h-3" />
+                Settings
+              </button>
+            </div>
           </div>
         )}
       </div>
