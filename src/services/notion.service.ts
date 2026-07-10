@@ -61,6 +61,30 @@ const NotionService = {
         return response;
     },
 
+    async batchMoveToLevel(pageIds: string[], targetLevel: string) {
+        const levels = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6'];
+
+        if (!levels.includes(targetLevel)) {
+            throw new Error('Target level không hợp lệ');
+        }
+
+        const operations = pageIds.map((pageId) => ({
+            pageId,
+            propertyName: 'Spaced Time',
+            selectValue: targetLevel,
+        }));
+
+        const response = (await axiosinstance.post(`/api/notion/batch`, {
+            operations,
+        })) as Record<string, unknown>;
+
+        if (response?.success === false) {
+            throw new Error((response.error as string) || 'Failed to batch update spaced time');
+        }
+
+        return response;
+    },
+
     async getSpacedTimeItems(pageSize: number, equalsValue: string) {
         const response = (await axiosinstance.post(`/api/notion/space`, {
             pageSize: pageSize,
