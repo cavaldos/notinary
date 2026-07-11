@@ -19,6 +19,17 @@ import type { DictionaryItem } from '@/redux/features/dictionarySlice';
 
 const spaceOptions = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6'];
 
+// ── Vietnamese accent-insensitive normalization (hỗ trợ search tiếng Việt) ──
+function normalizeText(str: string): string {
+    return str
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D')
+        .toLowerCase()
+        .trim();
+}
+
 // ── Synonym clustering via Union-Find (connected components) ──
 function buildSynonymGroups(items: DictionaryItem[]): DictionaryItem[][] {
     if (items.length === 0) return [];
@@ -210,34 +221,63 @@ const BatchList: React.FC = () => {
         return Array.from(set).sort();
     }, [dictionary]);
 
-    // ── Filter items ──
-    const filtered = useMemo(
-        () =>
-            dictionary.filter((item) => {
-                if (selectedType && !hasTypeTag(item.Type, selectedType)) return false;
-                if (selectedLevel === '__none__') {
-                    if (item.Level) return false;
-                } else if (selectedLevel && item.Level !== selectedLevel) {
-                    return false;
+    // ── Build synonym groups from ALL dictionary items ──
+    const allGroups = useMemo(() => buildSynonymGroups(dictionary), [dictionary]);
+
+    const allGroupGraphs = useMemo(
+        () => allGroups.map((group) => computeSynonymGraph(group)),
+        [allGroups],
+    );
+
+    // ── Filter at group level: keep entire group if ANY item passes ──
+    const visibleGroupData = useMemo(() => {
+        return allGroups
+            .map((group, idx) => {
+                // Type filter
+                if (selectedType) {
+                    const hasMatch = group.some((item) =>
+                        hasTypeTag(item.Type, selectedType),
+                    );
+                    if (!hasMatch) return null;
                 }
-                if (!search.trim()) return true;
-                const q = search.toLowerCase();
-                return (
-                    item.Word.toLowerCase().includes(q) ||
-                    item.Meaning.toLowerCase().includes(q)
-                );
-            }),
-        [dictionary, selectedType, selectedLevel, search],
-    );
 
-    // ── Synonym groups (recomputed whenever filters change) ──
-    const groups = useMemo(() => buildSynonymGroups(filtered), [filtered]);
+                // Level filter
+                if (selectedLevel === '__none__') {
+                    const hasMatch = group.some((item) => !item.Level);
+                    if (!hasMatch) return null;
+                } else if (selectedLevel) {
+                    const hasMatch = group.some(
+                        (item) => item.Level === selectedLevel,
+                    );
+                    if (!hasMatch) return null;
+                }
 
-    // ── Synonym graph with BFS depths for each group ──
-    const groupGraphs = useMemo(
-        () => groups.map((group) => computeSynonymGraph(group)),
-        [groups],
-    );
+                // Search filter (accent-insensitive, hỗ trợ cả EN + VI)
+                if (search.trim()) {
+                    const q = normalizeText(search);
+                    const hasMatch = group.some(
+                        (item) =>
+                            normalizeText(item.Word).includes(q) ||
+                            normalizeText(item.Meaning).includes(q),
+                    );
+                    if (!hasMatch) return null;
+                }
+
+                return { group, graph: allGroupGraphs[idx] };
+            })
+            .filter((g): g is NonNullable<typeof g> => g !== null);
+    }, [allGroups, allGroupGraphs, selectedType, selectedLevel, search]);
+
+    // ── Sort: multi-item groups (batches) first, single words last ──
+    const sortedGroups = useMemo(() => {
+        return [...visibleGroupData].sort((a, b) => {
+            const aMulti = a.group.length > 1;
+            const bMulti = b.group.length > 1;
+            if (aMulti && !bMulti) return -1;
+            if (!aMulti && bMulti) return 1;
+            return 0; // preserve original order within same category
+        });
+    }, [visibleGroupData]);
 
     // ── Handlers ──
     const handleSpeak = useCallback(
@@ -267,10 +307,24 @@ const BatchList: React.FC = () => {
         fetchData(space);
     }, [fetchData, space]);
 
-    // ── Stats for the group header ──
+    // ── Stats ──
+    const totalWords = useMemo(
+        () => sortedGroups.reduce((sum, { group }) => sum + group.length, 0),
+        [sortedGroups],
+    );
+
     const totalWithSynonyms = useMemo(
-        () => filtered.filter((item) => item.Synonyms && item.Synonyms.length > 0).length,
-        [filtered],
+        () =>
+            sortedGroups.reduce(
+                (sum, { group }) =>
+                    sum +
+                    group.filter(
+                        (item) =>
+                            item.Synonyms && item.Synonyms.length > 0,
+                    ).length,
+                0,
+            ),
+        [sortedGroups],
     );
 
     return (
@@ -511,8 +565,8 @@ const BatchList: React.FC = () => {
                         </span>
                     )}
                     <span className="text-xs text-gray-400 ml-auto">
-                        {filtered.length} word{filtered.length !== 1 ? 's' : ''}
-                        {groups.length > 0 && ` · ${groups.length} group${groups.length !== 1 ? 's' : ''}`}
+                        {totalWords} word{totalWords !== 1 ? 's' : ''}
+                        {sortedGroups.length > 0 && ` · ${sortedGroups.length} group${sortedGroups.length !== 1 ? 's' : ''}`}
                     </span>
                 </div>
             </div>
@@ -523,17 +577,15 @@ const BatchList: React.FC = () => {
                     <div className="flex items-center justify-center h-40 text-gray-400 text-sm">
                         Loading...
                     </div>
-                ) : filtered.length === 0 ? (
+                ) : sortedGroups.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-40 text-gray-400 gap-2">
                         <Search size={24} />
                         <span className="text-sm">No words found</span>
                     </div>
                 ) : (
                     <div className="flex flex-col gap-3 max-w-xl mx-auto px-4 pb-4">
-                        {groups.map((group, groupIdx) => {
+                        {sortedGroups.map(({ group, graph }, groupIdx) => {
                             const isCollapsed = collapsedGroups.has(groupIdx);
-                            // Use pre-computed synonym graph with BFS depth levels
-                            const graph = groupGraphs[groupIdx];
 
                             const groupMeaning =
                                 group.find((item) => item.Meaning)?.Meaning || '';
@@ -561,11 +613,12 @@ const BatchList: React.FC = () => {
                                     {/* ── Group header ── */}
                                     <button
                                         onClick={() => toggleGroup(groupIdx)}
-                                        className="w-full flex items-center justify-between px-4 py-3
+                                        className="w-full flex items-center px-4 py-3
                                                    hover:bg-beige/20 active:bg-beige/30
                                                    transition-all duration-150"
                                     >
-                                        <div className="flex items-center gap-2.5 min-w-0">
+                                        {/* Center: badge + depth info */}
+                                        <div className="flex items-center gap-2.5 mx-auto">
                                             {/* Group size badge */}
                                             <span
                                                 className={`text-xs font-bold rounded-full px-2 py-0.5 shrink-0 leading-none
@@ -609,17 +662,19 @@ const BatchList: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        {isCollapsed ? (
-                                            <ChevronRight
-                                                size={16}
-                                                className="text-gray-400 shrink-0 transition-transform"
-                                            />
-                                        ) : (
-                                            <ChevronDown
-                                                size={16}
-                                                className="text-gray-400 shrink-0 transition-transform"
-                                            />
-                                        )}
+                                        <span className="shrink-0">
+                                            {isCollapsed ? (
+                                                <ChevronRight
+                                                    size={16}
+                                                    className="text-gray-400 transition-transform"
+                                                />
+                                            ) : (
+                                                <ChevronDown
+                                                    size={16}
+                                                    className="text-gray-400 transition-transform"
+                                                />
+                                            )}
+                                        </span>
                                     </button>
 
                                     {/* ── Group items (sorted by depth) ── */}
