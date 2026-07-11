@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Settings, Gamepad2, Zap, List, FileDown } from 'lucide-react';
+import { Settings, Gamepad2, Zap, List, FileDown, Layers } from 'lucide-react';
 
 const Home: React.FC = () => {
   const router = useRouter();
@@ -16,6 +16,7 @@ const Home: React.FC = () => {
   const quickActions = [
     { label: "Game", path: "/game", icon: Gamepad2, desc: "Play & learn" },
     { label: "Auto", path: "/auto", icon: Zap, desc: "Auto review" },
+    { label: "Batch", path: "/batch", icon: Layers, desc: "Synonym groups" },
     { label: "List", path: "/list", icon: List, desc: "Word list" },
     { label: "Export", path: "/export", icon: FileDown, desc: "Export words" },
   ];

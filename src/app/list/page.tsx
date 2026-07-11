@@ -318,7 +318,7 @@ const WordList: React.FC = () => {
                                 ))}
 
                                 {/* Meaning */}
-                                <span className="text-sm text-gray-500 leading-snug truncate min-w-0">
+                                <span className="text-sm text-gray-600 leading-snug truncate min-w-0">
                                     {item.Meaning}
                                 </span>
                             </div>
@@ -354,7 +354,7 @@ const WordList: React.FC = () => {
                                         {popupItem.Word}
                                     </h2>
                                 </div>
-                                <p className="text-sm text-gray-500 leading-snug mt-1">
+                                <p className="text-sm text-gray-600 leading-snug mt-1">
                                     {popupItem.Meaning}
                                 </p>
                                 {normalizeTypeTags(popupItem.Type).length > 0 && (
