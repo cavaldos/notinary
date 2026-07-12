@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Volume2, ArrowRight, ArrowLeft } from 'lucide-react';
 import NotionService from '@/services/notion.service';
 import { useParams } from 'next/navigation';
@@ -18,9 +18,13 @@ interface CardProps {
     example?: string;
     synonyms?: string[];
     genre?: string;
+    onPrev?: () => void;
+    onNext?: () => void;
 }
 
-const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, meaning, pronunciation, example, synonyms = [], genre }) => {
+const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, meaning, pronunciation, example, synonyms = [], genre, onPrev, onNext }) => {
+    const [popDir, setPopDir] = useState<'prev' | 'next' | null>(null);
+    const updatingRef = useRef(false);
     const showMeaning = true;
     const typeTags = normalizeTypeTags(type);
     const params = useParams();
@@ -34,7 +38,9 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
     };
 
 
-    const updateSpacedTime = async (idPage: any, selectValue: string, status: string) => {
+    const updateSpacedTime = useCallback(async (idPage: any, selectValue: string, status: string) => {
+        if (updatingRef.current) return; // debounce
+        updatingRef.current = true;
         try {
             const response: any = await NotionService.updateSpacedTime(idPage, selectValue, status);
             if (response.success) {
@@ -44,8 +50,10 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
             }
         } catch (error) {
             console.error('Lỗi khi cập nhật:', error);
+        } finally {
+            updatingRef.current = false;
         }
-    };
+    }, []);
 
     // Handle the case where space might be undefined
     const handleSpaceUpdate = (status: string) => {
@@ -142,21 +150,31 @@ const CardSpace: React.FC<CardProps> = ({ index, idPage, word, level, type, mean
             {/* Navigation buttons - Cải thiện CSS */}
             <div className="flex items-center justify-center gap-5 mt-auto pt-6">
                 <button
-                    onClick={() => handleSpaceUpdate('down')}
-                    className="group flex items-center justify-center w-12 h-12 bg-beige rounded-md transition-all duration-200 hover:cursor-pointer"
-                    title="Thẻ trước"
+                    onClick={() => {
+                        setPopDir('prev');
+                        setTimeout(() => setPopDir(null), 350);
+                        handleSpaceUpdate('down');
+                        onPrev?.();
+                    }}
+                    className={`flex items-center justify-center w-10 h-8 bg-beige rounded-lg transition-all duration-200 hover:cursor-pointer hover:scale-125 ${popDir === 'prev' ? 'animate-pop' : ''}`}
+                    title="Previous card (←)"
                 >
-                    <ArrowLeft className="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" />
+                    <ArrowLeft className="w-5 h-5 text-gray-600 transition-colors" />
                 </button>
                 <div className="flex items-center justify-center">
                     <span className="font-semibold text-gray-600">{index}</span>
                 </div>
                 <button
-                    onClick={() => handleSpaceUpdate('up')}
-                    className="group flex items-center justify-center w-12 h-12 bg-beige rounded-md transition-all duration-200 hover:cursor-pointer"
-                    title="Thẻ tiếp theo"
+                    onClick={() => {
+                        setPopDir('next');
+                        setTimeout(() => setPopDir(null), 350);
+                        handleSpaceUpdate('up');
+                        onNext?.();
+                    }}
+                    className={`flex items-center justify-center w-10 h-8 bg-beige rounded-lg transition-all duration-200 hover:cursor-pointer hover:scale-125 ${popDir === 'next' ? 'animate-pop' : ''}`}
+                    title="Next card (→)"
                 >
-                    <ArrowRight className="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" />
+                    <ArrowRight className="w-5 h-5 text-gray-600 transition-colors" />
                 </button>
             </div>
         </div>

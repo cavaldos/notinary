@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import NotionDatabase from '@/lib/notion-query';
 import { sleep } from '@/lib/notion-base';
 
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 5;
 
 export async function POST(request: Request) {
     try {

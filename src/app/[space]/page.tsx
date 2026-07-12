@@ -7,6 +7,52 @@ import { useDictionary } from '@/hooks/useDictionary';
 import { saveScrollPosition } from '@/redux/features/scrollSlice';
 import type { RootState } from '@/redux/store';
 
+// ── Easing scroll animation (chậm → nhanh → chậm) ──
+function animatedScrollTo(
+    container: HTMLElement,
+    targetPosition: number,
+    duration: number = 400,
+) {
+    const startPosition = container.scrollTop;
+    const distance = targetPosition - startPosition;
+    if (Math.abs(distance) < 1) return;
+
+    // Nhảy tức thì nếu duration = 0
+    if (duration <= 0) {
+        container.scrollTop = targetPosition;
+        return;
+    }
+
+    // Tạm tắt snap để animation mượt, không bị ngắt quãng
+    const prevSnap = container.style.scrollSnapType;
+    container.style.scrollSnapType = 'none';
+
+    const startTime = performance.now();
+
+    // easeInOutCubic: chậm → nhanh → chậm
+    const easeInOutCubic = (t: number): number =>
+        t < 0.5
+            ? 4 * t * t * t
+            : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+    const animate = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easedProgress = easeInOutCubic(progress);
+
+        container.scrollTop = startPosition + distance * easedProgress;
+
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            // Khôi phục snap sau khi animation hoàn tất
+            container.style.scrollSnapType = prevSnap;
+        }
+    };
+
+    requestAnimationFrame(animate);
+}
+
 const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
     const { fetchData, dictionary } = useDictionary();
     const dispatch = useDispatch();
@@ -17,6 +63,7 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
     );
 
     const [currentIndex, setCurrentIndex] = useState(savedIndex);
+    const currentIndexRef = useRef(savedIndex);
     const containerRef = useRef<HTMLDivElement>(null);
     const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
     const hasRestored = useRef(false);
@@ -25,20 +72,46 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
         fetchData(space);
     }, [fetchData, space]);
 
-    // Scroll to specific card
+    // ── Scroll đến card với easing ──
     const scrollToCard = useCallback(
-        (index: number, behavior: ScrollBehavior = 'smooth') => {
-            if (cardRefs.current[index]) {
-                cardRefs.current[index]?.scrollIntoView({
-                    behavior,
-                    block: 'center',
-                });
-            }
+        (index: number, duration: number = 400) => {
+            const card = cardRefs.current[index];
+            const container = containerRef.current;
+            if (!card || !container) return;
+
+            const containerRect = container.getBoundingClientRect();
+            const cardRect = card.getBoundingClientRect();
+            const targetPosition =
+                container.scrollTop +
+                (cardRect.top - containerRect.top) -
+                container.clientHeight / 2 +
+                card.offsetHeight / 2;
+
+            currentIndexRef.current = index;
+            animatedScrollTo(container, targetPosition, duration);
         },
         [],
     );
 
-    // ── Khôi phục vị trí cuộn khi data đã load và card được render ──
+    // ── Keyboard shortcuts: Home → đầu, End → cuối ──
+    useEffect(() => {
+        if (dictionary.length === 0) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Home') {
+                e.preventDefault();
+                scrollToCard(0, 500);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                scrollToCard(dictionary.length - 1, 500);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [dictionary.length, scrollToCard]);
+
+    // ── Khôi phục vị trí cuộn khi quay lại ──
     useEffect(() => {
         if (
             dictionary.length > 0 &&
@@ -47,9 +120,9 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
             cardRefs.current[savedIndex]
         ) {
             hasRestored.current = true;
-            // Dùng timeout nhỏ để đảm bảo DOM đã render xong
+            // Không animation khi khôi phục — nhảy tức thì
             requestAnimationFrame(() => {
-                scrollToCard(savedIndex, 'auto');
+                scrollToCard(savedIndex, 0);
             });
         }
     }, [dictionary.length, savedIndex, scrollToCard]);
@@ -59,7 +132,7 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
         hasRestored.current = false;
     }, [space]);
 
-    // Handle scroll event with snap effect
+    // ── Snap effect khi cuộn tay ──
     useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
@@ -90,8 +163,8 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
                 });
 
                 if (closestIndex !== currentIndex) {
+                    currentIndexRef.current = closestIndex;
                     setCurrentIndex(closestIndex);
-                    // Lưu index vào Redux để khi quay lại vẫn nhớ
                     dispatch(saveScrollPosition({ space, index: closestIndex }));
                     scrollToCard(closestIndex);
                 }
@@ -104,6 +177,15 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
             clearTimeout(timeoutId);
         };
     }, [currentIndex, scrollToCard, dispatch, space]);
+
+    const step10 = Math.max(1, Math.round(dictionary.length * 0.1));
+    const scrollUp10 = () =>
+        scrollToCard(Math.max(0, currentIndexRef.current - step10), 400);
+    const scrollDown10 = () =>
+        scrollToCard(
+            Math.min(dictionary.length - 1, currentIndexRef.current + step10),
+            400,
+        );
 
     return (
         <div className="flex flex-col h-screen mb-[20px] w-full max-w-full">
@@ -134,6 +216,24 @@ const SpaceTime = ({ params }: { params: Promise<{ space: string }> }) => {
                         />
                     </div>
                 ))}
+            </div>
+
+            {/* Floating scroll buttons — ↑ lên 10% / ↓ xuống 10% */}
+            <div className="fixed bottom-12 right-6 flex flex-col gap-1.5 z-[999]">
+                <button
+                    onClick={scrollUp10}
+                    className="w-7 h-7 rounded-full bg-beige text-grey-dark shadow-md hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center text-xs font-bold"
+                    title={`Lên ${step10} từ (Home = đầu)`}
+                >
+                    ↑
+                </button>
+                <button
+                    onClick={scrollDown10}
+                    className="w-7 h-7 rounded-full bg-beige text-grey-dark shadow-md hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center text-xs font-bold"
+                    title={`Xuống ${step10} từ (End = cuối)`}
+                >
+                    ↓
+                </button>
             </div>
         </div>
     );
