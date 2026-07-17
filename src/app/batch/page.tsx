@@ -293,12 +293,9 @@ const BatchList: React.FC = () => {
                 const found = wordAcrossSpacesMap.get(
                     item.Word.toLowerCase().trim(),
                 );
-                // Merge real metadata if found, otherwise default to L6
-                return {
-                    ...(found ?? item),
-                    Level: found?.Level || 'L6',
-                    id: item.id,
-                };
+                if (!found) return item;
+                // Merge real metadata but keep the virtual id prefix
+                return { ...found, id: item.id };
             }),
         );
     }, [dictionary, wordAcrossSpacesMap]);
