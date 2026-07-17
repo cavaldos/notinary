@@ -12,10 +12,12 @@ import {
     SlidersHorizontal,
     X,
 } from 'lucide-react';
+import { useSelector } from 'react-redux';
 import { useDictionary } from '@/hooks/useDictionary';
 import useTextToSpeech from '@/hooks/useTextToSpeech';
 import { hasTypeTag, normalizeTypeTags } from '@/lib/type-tags';
 import type { DictionaryItem } from '@/redux/features/dictionarySlice';
+import type { RootState } from '@/redux/store';
 
 const spaceOptions = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6'];
 
@@ -40,9 +42,51 @@ function buildSynonymGroups(items: DictionaryItem[]): DictionaryItem[][] {
         wordToIndex.set(item.Word.toLowerCase().trim(), idx);
     });
 
+    // ── Collect external synonym references (words not in dictionary) ──
+    // These are synonyms that reference items outside the current space.
+    // We create "virtual" DictionaryItem entries so they appear in the group.
+    const virtualItems: DictionaryItem[] = [];
+    const seenVirtual = new Map<string, number>(); // word key → index in virtualItems
+
+    const getOrCreateVirtual = (word: string): number => {
+        const key = word.toLowerCase().trim();
+        const existing = seenVirtual.get(key);
+        if (existing !== undefined) return existing;
+        const idx = virtualItems.length;
+        virtualItems.push({
+            id: `virtual-syn-${idx}`,
+            Word: word,
+            Level: '',
+            Type: [],
+            Pronounce: '',
+            Meaning: '',
+            Synonyms: [],
+        });
+        seenVirtual.set(key, idx);
+        return idx;
+    };
+
+    items.forEach((item) => {
+        if (!item.Synonyms) return;
+        for (const syn of item.Synonyms) {
+            const synKey = syn.toLowerCase().trim();
+            if (!wordToIndex.has(synKey)) {
+                getOrCreateVirtual(syn);
+            }
+        }
+    });
+
+    // Merge real + virtual items, rebuild the word→index map
+    const allItems = [...items, ...virtualItems];
+
+    const allWordToIndex = new Map<string, number>();
+    allItems.forEach((item, idx) => {
+        allWordToIndex.set(item.Word.toLowerCase().trim(), idx);
+    });
+
     // Union-Find data structure
-    const parent = items.map((_, i) => i);
-    const rank = new Array(items.length).fill(0);
+    const parent = allItems.map((_, i) => i);
+    const rank = new Array(allItems.length).fill(0);
 
     const find = (x: number): number => {
         if (parent[x] !== x) parent[x] = find(parent[x]);
@@ -64,10 +108,10 @@ function buildSynonymGroups(items: DictionaryItem[]): DictionaryItem[][] {
     };
 
     // Build edges: connect words that appear in each other's Synonyms
-    items.forEach((item, idx) => {
+    allItems.forEach((item, idx) => {
         if (!item.Synonyms || item.Synonyms.length === 0) return;
         for (const synonym of item.Synonyms) {
-            const targetIdx = wordToIndex.get(synonym.toLowerCase().trim());
+            const targetIdx = allWordToIndex.get(synonym.toLowerCase().trim());
             if (targetIdx !== undefined && targetIdx !== idx) {
                 union(idx, targetIdx);
             }
@@ -76,7 +120,7 @@ function buildSynonymGroups(items: DictionaryItem[]): DictionaryItem[][] {
 
     // Collect connected components into groups
     const groupMap = new Map<number, DictionaryItem[]>();
-    items.forEach((item, idx) => {
+    allItems.forEach((item, idx) => {
         const root = find(idx);
         if (!groupMap.has(root)) {
             groupMap.set(root, []);
@@ -170,6 +214,7 @@ const BatchList: React.FC = () => {
     const router = useRouter();
     const { fetchData, dictionary, loading } = useDictionary();
     const { speak } = useTextToSpeech();
+    const allSpaces = useSelector((state: RootState) => state.dictionary.spaces);
 
     // ── Filters ──
     const [space, setSpace] = useState('L1');
@@ -221,8 +266,42 @@ const BatchList: React.FC = () => {
         return Array.from(set).sort();
     }, [dictionary]);
 
+    // ── Build a lookup map for words across ALL cached spaces ──
+    // This enriches virtual items (external synonyms) with real metadata.
+    const wordAcrossSpacesMap = useMemo(() => {
+        const map = new Map<string, DictionaryItem>();
+        for (const spaceState of Object.values(allSpaces)) {
+            if (!spaceState.dictionary) continue;
+            for (const item of spaceState.dictionary) {
+                const key = item.Word.toLowerCase().trim();
+                // First real (non-virtual) occurrence wins; skip virtual entries
+                if (!map.has(key) && !key.startsWith('virtual-syn-')) {
+                    map.set(key, item);
+                }
+            }
+        }
+        return map;
+    }, [allSpaces]);
+
     // ── Build synonym groups from ALL dictionary items ──
-    const allGroups = useMemo(() => buildSynonymGroups(dictionary), [dictionary]);
+    const allGroups = useMemo(() => {
+        const groups = buildSynonymGroups(dictionary);
+        // Enrich virtual items with real metadata from any cached space
+        return groups.map((group) =>
+            group.map((item) => {
+                if (!item.id.startsWith('virtual-syn-')) return item;
+                const found = wordAcrossSpacesMap.get(
+                    item.Word.toLowerCase().trim(),
+                );
+                // Merge real metadata if found, otherwise default to L6
+                return {
+                    ...(found ?? item),
+                    Level: found?.Level || 'L6',
+                    id: item.id,
+                };
+            }),
+        );
+    }, [dictionary, wordAcrossSpacesMap]);
 
     const allGroupGraphs = useMemo(
         () => allGroups.map((group) => computeSynonymGraph(group)),
